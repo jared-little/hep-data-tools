@@ -142,7 +142,7 @@ def CalculateAndSaveSignalEfficiency(sig, var):
         for cut_value, efficiency in efficiencies:
             writer.writerow([f"{cut_value:.2f}", f"{efficiency:.4f}"])
             
-    print(f"\Signal efficiencies successfully written to {output}")
+    print(f"Signal efficiencies successfully written to {output}")
 
 
 if __name__ == "__main__":

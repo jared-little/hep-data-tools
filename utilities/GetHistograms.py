@@ -1,8 +1,14 @@
 import ROOT
+import os
+from dotenv import load_dotenv
 
+load_dotenv("histograms.env")
 
 # inputFolder = "/data/hslien/bbVV_0lep/hist/ABCDRegion/"
-inputFolder = "/data/jlittle/HHARDout/all_mc23_nominal/"
+# inputFolder = "/data/jlittle/HHARDout/all_mc23_nominal/"
+
+inputFolder = os.getenv("inputFolder")
+print(inputFolder)
 
 
 def getSignalHistogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="All", Rebin=1, campaigns=["mc23a"]):
