@@ -12,9 +12,7 @@ def MakeZnPlots(Var, Region, optimize, Rebin=1):
   # fOutput = ROOT.TFile("ZnOptimizer-XHS.root","UPDATE")
 
   bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
-  # campaigns = ["mc23a", "mc23d", "mc23e"]
-  campaigns = ["mc23a"] # For testing
-  #bkg_names = ["dijet", "ttbar"]
+  campaigns = ["mc23a", "mc23e"] # "mc23a, mc23d, mc23e"
 
   hist_bkgs = {name: getBkgHistogram(name, Var, Region, Rebin) for name in bkg_names}
   colors = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2, ROOT.kMagenta, ROOT.kCyan+1]
@@ -151,17 +149,13 @@ if __name__ == "__main__":
   ROOT.gStyle.SetOptStat(False)
   Rebin=1
 
-  MakeZnPlots("NN_score", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_1", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_2", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_3", "All", optimize="SB", Rebin=Rebin)
 
-  # MakeZnPlots("NN_score", "Preselection", optimize="SB", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("NN_score", "Preselection_central", optimize="Zn", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("NN_score", "Preselection_inNear", optimize="SB", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("NN_score", "Preselection_inFar", optimize="SB", Rebin=Rebin, campaign="mc23a")
-
-  # MakeZnPlots("Hbb_bjR_mass_gev","Preselection",optimize="SB", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("Hbb_bjR_mass_gev","Preselection_central",optimize="SB", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("Hbb_bjR_mass_gev","Preselection_inNear",optimize="Zn", Rebin=Rebin, campaign="mc23a")
-  # MakeZnPlots("Hbb_bjR_massPeak","Preselection_inFar",optimize="Zn", Rebin=Rebin, campaign="mc23a")
+  MakeZnPlots("largeRjetm_1", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetm_2", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetm_3", "All", optimize="SB", Rebin=Rebin)
 
   #CalculateAndSaveSignalEfficiency("XHS_X2000_S1000", "NN_score")
   #CalculateAndSaveSignalEfficiency("XHS_X3000_S1500", "NN_score")

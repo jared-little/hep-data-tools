@@ -4,12 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv("histograms.env")
 
-# inputFolder = "/data/hslien/bbVV_0lep/hist/ABCDRegion/"
-# inputFolder = "/data/jlittle/HHARDout/all_mc23_nominal/"
-
-inputFolder = os.getenv("inputFolder")
+inputFolder = os.getenv("INPUT_FOLDER")
 print(inputFolder)
-
 
 def getSignalHistogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="All", Rebin=1, campaigns=["mc23a"]):
     """Get the signal histogram for a given signal, variable, region, and rebinning factor."""
