@@ -1,3 +1,4 @@
-*.env
-plots/*.pdf
-plots/*.png
+**.env
+**.pdf
+**.png
+__pycache__/
