@@ -5,6 +5,7 @@ from optparse import OptionParser
 
 ROOT.gROOT.SetStyle("ATLAS")
 
+
 def getSignalHistogram(Signal="XHS_X4000_S2000", Var="nn_score", region="Preselection", rebin=1):
 
   file = ROOT.TFile.Open(inputFolder + Signal + "_bbWW_allhad.root")
