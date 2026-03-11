@@ -1,7 +1,7 @@
 import ROOT
 import time
 from utilities.ComputeSignificance import GetEfficiencySelection
-from utilities.GetHistograms import getSignalHistogram, getBkgHistogram
+from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
 from array import array
 
 ROOT.gROOT.SetStyle("ATLAS")
@@ -10,14 +10,14 @@ ROOT.gROOT.SetStyle("ATLAS")
 def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
 
     if bg == "total":
-      hist_bkg = getBkgHistogram("ttbar",Var)
-      hist_bkg.Add(getBkgHistogram("dijet",Var))
+      hist_bkg = get_bkg_histogram("ttbar",Var, Region="Preselection", Rebin=1)
+      hist_bkg.Add(get_bkg_histogram("dijet",Var, Region="Preselection", Rebin=1))
     else:
-      hist_bkg = getBkgHistogram(bg,Var)
+      hist_bkg = get_bkg_histogram(bg,Var, Region="Preselection", Rebin=1)
 
-    hist_XHS_2000_1000 = getSignalHistogram("XHS_X2000_S1000",Var)
-    hist_XHS_3000_1500 = getSignalHistogram("XHS_X3000_S1500",Var)
-    hist_XHS_4000_2000 = getSignalHistogram("XHS_X4000_S2000",Var)
+    hist_XHS_2000_1000 = get_signal_histogram("XHS_X2000_S1000",Var, Region="Preselection", Rebin=1)
+    hist_XHS_3000_1500 = get_signal_histogram("XHS_X3000_S1500",Var, Region="Preselection", Rebin=1)
+    hist_XHS_4000_2000 = get_signal_histogram("XHS_X4000_S2000",Var, Region="Preselection", Rebin=1)
 
     hist_bkg.Scale(1/hist_bkg.Integral())
     hist_XHS_2000_1000.Scale(1/hist_XHS_2000_1000.Integral())
@@ -82,7 +82,7 @@ def combine_ROCs(bkg="total"):
     c = ROOT.TCanvas(canName,canName, 700, 700)
     c.cd()
 
-    # ROC_jet1pt = MakeROC(Var="largeRjetpt_1", VarName="p_{T}^{Jet 1}", direction="upper",bg=bkg)
+    ROC_jet1pt = MakeROC(Var="largeRjetpt_1", VarName="p_{T}^{Jet 1}", direction="upper",bg=bkg)
     ROC_jet2pt = MakeROC(Var="largeRjetpt_2", VarName="p_{T}^{Jet 2}", direction="upper",bg=bkg)
     ROC_jet3pt = MakeROC(Var="largeRjetpt_3", VarName="p_{T}^{Jet 3}", direction="upper",bg=bkg)
     ROC_jet1m = MakeROC(Var="largeRjetm_1", VarName="m_{Jet 1}", direction="upper",bg=bkg)
@@ -90,14 +90,14 @@ def combine_ROCs(bkg="total"):
     ROC_jet3m = MakeROC(Var="largeRjetm_3", VarName="m_{Jet 3}", direction="upper",bg=bkg)
 
     multiGraph = ROOT.TMultiGraph()
-    # multiGraph.Add(ROC_jet1pt)
+    multiGraph.Add(ROC_jet1pt)
     multiGraph.Add(ROC_jet2pt)
     multiGraph.Add(ROC_jet3pt)
     multiGraph.Add(ROC_jet1m)
     multiGraph.Add(ROC_jet2m)
     multiGraph.Add(ROC_jet3m)
 
-    # ROC_jet1pt.SetLineWidth(2)
+    ROC_jet1pt.SetLineWidth(2)
     ROC_jet2pt.SetLineColor(11)
     ROC_jet2pt.SetLineWidth(2)
     ROC_jet3pt.SetLineColor(3)
@@ -117,7 +117,7 @@ def combine_ROCs(bkg="total"):
     leg.SetFillColor(0)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.025)
-    # leg.AddEntry(ROC_jet1pt, "p_{T}^{Jet 1}", "L")
+    leg.AddEntry(ROC_jet1pt, "p_{T}^{Jet 1}", "L")
     leg.AddEntry(ROC_jet2pt, "p_{T}^{Jet 2}", "L")
     leg.AddEntry(ROC_jet3pt, "p_{T}^{Jet 3}", "L")
     leg.AddEntry(ROC_jet1m, "m^{Jet 1}", "L")
@@ -133,7 +133,6 @@ def combine_ROCs(bkg="total"):
 
 if __name__ == "__main__":
 
-    inputFolder = "/data/hslien/bbVV_0lep/hist/all_mc23_nominal/"
 
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)

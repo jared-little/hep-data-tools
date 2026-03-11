@@ -1,7 +1,7 @@
 import ROOT
 # from utilities.ComputeSignificance import computeSignificance
 from utilities.ComputeSignificance import GetZnHisto, GetSBHisto
-from utilities.GetHistograms import getSignalHistogram, getBkgHistogram
+from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
 
 ROOT.gROOT.SetStyle("ATLAS")
 
@@ -12,19 +12,19 @@ def MakeZnPlots(Var, Region, optimize, Rebin=1):
   # fOutput = ROOT.TFile("ZnOptimizer-XHS.root","UPDATE")
 
   bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
-  campaigns = ["mc23a", "mc23e"] # "mc23a, mc23d, mc23e"
+  campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
 
-  hist_bkgs = {name: getBkgHistogram(name, Var, Region, Rebin) for name in bkg_names}
+  hist_bkgs = {name: get_bkg_histogram(name, Var, Region, Rebin, campaigns) for name in bkg_names}
   colors = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2, ROOT.kMagenta, ROOT.kCyan+1]
 
-  hist_XHS_X2000_S1000_mc23a = getSignalHistogram("XHS_X2000_S1000", Var, Region,Rebin, campaigns)
-  hist_XHS_X3000_S1500_mc23a = getSignalHistogram("XHS_X3000_S1500", Var, Region,Rebin, campaigns)
-  hist_XHS_X4000_S2000_mc23a = getSignalHistogram("XHS_X4000_S2000", Var, Region,Rebin, campaigns)
+  hist_XHS_X2000_S1000 = get_signal_histogram("XHS_X2000_S1000", Var, Region, Rebin, campaigns)
+  hist_XHS_X3000_S1500 = get_signal_histogram("XHS_X3000_S1500", Var, Region, Rebin, campaigns)
+  hist_XHS_X4000_S2000 = get_signal_histogram("XHS_X4000_S2000", Var, Region, Rebin, campaigns)
 
   sigHistoDict = {
-    "X2000_S1000": hist_XHS_X2000_S1000_mc23a,
-    "X3000_S1500": hist_XHS_X3000_S1500_mc23a,
-    "X4000_S2000": hist_XHS_X4000_S2000_mc23a
+    "X2000_S1000": hist_XHS_X2000_S1000,
+    "X3000_S1500": hist_XHS_X3000_S1500,
+    "X4000_S2000": hist_XHS_X4000_S2000
   }
 
   Stack = ROOT.THStack()
@@ -109,38 +109,8 @@ def MakeZnPlots(Var, Region, optimize, Rebin=1):
   for k in range(1,len(hZnUpper)): hZnUpper[k].Draw("same")
   ROOT.gPad.RedrawAxis()
 
-  if optimize == "Zn": c.SaveAs(f"plots/ZnOptimizer-{Region}-{Var}.pdf")
-  else: c.SaveAs(f"plots/SBOptimizer-{Region}-{Var}.pdf")
-
-
-def CalculateAndSaveSignalEfficiency(sig, var):
-    '''
-    Calculate the signal efficiency for a given signal and variable,
-    and save the results to a CSV file.
-    '''
-    hsig = getSignalHistogram(sig, var)
-    
-    total_signal_events = hsig.Integral(0, hsig.GetNbinsX() + 1)
-    if total_signal_events == 0:
-      return []
-
-    efficiencies = []
-    num_bins = hsig.GetNbinsX()
-    
-    for i in range(1, num_bins + 1):
-      passing_events = hsig.Integral(i, num_bins + 1)
-      efficiency = passing_events / total_signal_events
-      cut_value = hsig.GetBinLowEdge(i)
-      efficiencies.append((cut_value, efficiency))
-
-    output = f"SignalEfficiency_{sig}.csv"
-    with open(output, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['NN_score cut value', 'Sig Efficiency'])
-        for cut_value, efficiency in efficiencies:
-            writer.writerow([f"{cut_value:.2f}", f"{efficiency:.4f}"])
-            
-    print(f"Signal efficiencies successfully written to {output}")
+  if optimize == "Zn": c.SaveAs(f"plots/Optimize/ZnOptimizer-{Region}-{Var}.pdf")
+  else: c.SaveAs(f"plots/Optimize/SBOptimizer-{Region}-{Var}.pdf")
 
 
 if __name__ == "__main__":
@@ -148,15 +118,15 @@ if __name__ == "__main__":
   ROOT.gROOT.SetBatch(True)
   ROOT.gStyle.SetOptStat(False)
   Rebin=1
+  Region = "All" # "Preselection" or "All"
+  Optimize = "Zn" # "Zn" or "SB"
 
-  MakeZnPlots("largeRjetpt_1", "All", optimize="SB", Rebin=Rebin)
-  MakeZnPlots("largeRjetpt_2", "All", optimize="SB", Rebin=Rebin)
-  MakeZnPlots("largeRjetpt_3", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("NN_score", Region, Optimize, Rebin=Rebin)
 
-  MakeZnPlots("largeRjetm_1", "All", optimize="SB", Rebin=Rebin)
-  MakeZnPlots("largeRjetm_2", "All", optimize="SB", Rebin=Rebin)
-  MakeZnPlots("largeRjetm_3", "All", optimize="SB", Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_1", Region, Optimize, Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_2", Region, Optimize, Rebin=Rebin)
+  MakeZnPlots("largeRjetpt_3", Region, Optimize, Rebin=Rebin)
 
-  #CalculateAndSaveSignalEfficiency("XHS_X2000_S1000", "NN_score")
-  #CalculateAndSaveSignalEfficiency("XHS_X3000_S1500", "NN_score")
-  #CalculateAndSaveSignalEfficiency("XHS_X4000_S2000", "NN_score")
+  MakeZnPlots("largeRjetm_1", Region, Optimize, Rebin=Rebin)
+  MakeZnPlots("largeRjetm_2", Region, Optimize, Rebin=Rebin)
+  MakeZnPlots("largeRjetm_3", Region, Optimize, Rebin=Rebin)
