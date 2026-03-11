@@ -1,7 +1,7 @@
 import ROOT
 import numpy as np
 
-def computeSignificance(n, b, sigma):
+def compute_significance(n, b, sigma):
     """Compute the significance using the Asimov formula, accounting for background uncertainty."""
 
     if sigma <= 0:
@@ -17,7 +17,7 @@ def computeSignificance(n, b, sigma):
     return np.sqrt(t0) if n >= b else -np.sqrt(t0)
 
 
-def GetZnHisto(sigHistoDict,bkgHisto,versus):
+def get_Zn_histogram(sigHistoDict,bkgHisto,versus):
     """Calculate the Zn histogram for each signal histogram compared to the background histogram, for either upper or lower cuts."""
 
     hZn = []
@@ -29,7 +29,7 @@ def GetZnHisto(sigHistoDict,bkgHisto,versus):
           if bkgHisto.Integral(i,sig.GetNbinsX())>0:
             error = 0.0
             # print(sigName+":\t" "Cut:", h.GetBinLowEdge(i), "\tSignal Events:", sig.Integral(i,sig.GetNbinsX()), "\tBackground Events:", bkgHisto.Integral(i,sig.GetNbinsX()))
-            zn = computeSignificance(sig.Integral(i,sig.GetNbinsX()),bkgHisto.Integral(i,sig.GetNbinsX()),error)
+            zn = compute_significance(sig.Integral(i,sig.GetNbinsX()),bkgHisto.Integral(i,sig.GetNbinsX()),error)
             if zn > max: max = zn
             h.SetBinContent(i, zn)
           else:
@@ -38,7 +38,7 @@ def GetZnHisto(sigHistoDict,bkgHisto,versus):
         for i in range(0,sig.GetNbinsX()):
           if bkgHisto.Integral(1,sig.GetNbinsX()-i)>0:
             error = 0.0
-            zn = computeSignificance(sig.Integral(1,sig.GetNbinsX()-i),bkgHisto.Integral(1,sig.GetNbinsX()-i),error)
+            zn = compute_significance(sig.Integral(1,sig.GetNbinsX()-i),bkgHisto.Integral(1,sig.GetNbinsX()-i),error)
             if zn > max: max = zn
             h.SetBinContent(sig.GetNbinsX()-i, zn)
           else:
@@ -54,7 +54,7 @@ def GetZnHisto(sigHistoDict,bkgHisto,versus):
     return hZn, max
 
 
-def GetSBHisto(sigHistoDict,bkgHisto,versus):
+def get_SB_histogram(sigHistoDict,bkgHisto,versus):
     """Calculate the S/B histogram for each signal histogram compared to the background histogram, for either upper or lower cuts."""
 
     hSB = []
@@ -89,7 +89,7 @@ def GetSBHisto(sigHistoDict,bkgHisto,versus):
     return hSB, max
 
 
-def GetEfficiencySelection(Histo,versus):
+def get_efficiency_selection(Histo,versus):
 
     h = ROOT.TH1D("hEff_"+Histo.GetName()+"_"+versus,"",Histo.GetNbinsX(),Histo.GetXaxis().GetXmin(),Histo.GetXaxis().GetXmax())
     if versus=="upper":
@@ -104,7 +104,7 @@ def GetEfficiencySelection(Histo,versus):
     return h
 
 
-def computeSignificance_deprecated(s,b,sigma):
+def compute_significance_deprecated(s,b,sigma):
     """Compute the significance using the Asimov formula, accounting for background uncertainty."""
     import math
     n = s + b

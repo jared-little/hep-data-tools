@@ -1,6 +1,6 @@
 import ROOT
 import time
-from utilities.ComputeSignificance import GetEfficiencySelection
+from utilities.ComputeSignificance import get_efficiency_selection
 from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
 from array import array
 
@@ -31,11 +31,11 @@ def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
     c = ROOT.TCanvas(canName,canName, 700, 700)
     c.cd()
 
-    hSelection_bkg = GetEfficiencySelection(hist_bkg, direction)
+    hSelection_bkg = get_efficiency_selection(hist_bkg, direction)
 
-    hSelection_XHS_2000_1000 = GetEfficiencySelection(hist_XHS_2000_1000, direction)
-    hSelection_XHS_3000_1500 = GetEfficiencySelection(hist_XHS_3000_1500, direction)
-    hSelection_XHS_4000_2000 = GetEfficiencySelection(hist_XHS_4000_2000, direction)
+    hSelection_XHS_2000_1000 = get_efficiency_selection(hist_XHS_2000_1000, direction)
+    hSelection_XHS_3000_1500 = get_efficiency_selection(hist_XHS_3000_1500, direction)
+    hSelection_XHS_4000_2000 = get_efficiency_selection(hist_XHS_4000_2000, direction)
 
     n = 0
     nSteps = 30

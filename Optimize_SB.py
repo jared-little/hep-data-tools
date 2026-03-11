@@ -1,12 +1,12 @@
 import ROOT
 # from utilities.ComputeSignificance import computeSignificance
-from utilities.ComputeSignificance import GetZnHisto, GetSBHisto
+from utilities.ComputeSignificance import get_Zn_histogram, get_SB_histogram
 from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
 
 ROOT.gROOT.SetStyle("ATLAS")
 
 
-def MakeZnPlots(Var, Region, optimize, Rebin=1):
+def make_Zn_plots(Var, Region, optimize, Rebin=1):
   """Make plots of the Zn or S/B as a function of the cut value on a given variable, for a given region and rebinning factor."""
 
   # fOutput = ROOT.TFile("ZnOptimizer-XHS.root","UPDATE")
@@ -88,8 +88,8 @@ def MakeZnPlots(Var, Region, optimize, Rebin=1):
   pad2.Draw()
   pad2.cd()
 
-  if optimize == "Zn": hZnUpper, ymax = GetZnHisto(sigHistoDict,bkgHisto,"upper")
-  else: hZnUpper, ymax = GetSBHisto(sigHistoDict,bkgHisto,"upper")
+  if optimize == "Zn": hZnUpper, ymax = get_Zn_histogram(sigHistoDict,bkgHisto,"upper")
+  else: hZnUpper, ymax = get_SB_histogram(sigHistoDict,bkgHisto,"upper")
 
   for h in hZnUpper:
     h.GetXaxis().SetTitle(Var)
@@ -121,12 +121,12 @@ if __name__ == "__main__":
   Region = "All" # "Preselection" or "All"
   Optimize = "Zn" # "Zn" or "SB"
 
-  MakeZnPlots("NN_score", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("NN_score", Region, Optimize, Rebin=Rebin)
 
-  MakeZnPlots("largeRjetpt_1", Region, Optimize, Rebin=Rebin)
-  MakeZnPlots("largeRjetpt_2", Region, Optimize, Rebin=Rebin)
-  MakeZnPlots("largeRjetpt_3", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetpt_1", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetpt_2", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetpt_3", Region, Optimize, Rebin=Rebin)
 
-  MakeZnPlots("largeRjetm_1", Region, Optimize, Rebin=Rebin)
-  MakeZnPlots("largeRjetm_2", Region, Optimize, Rebin=Rebin)
-  MakeZnPlots("largeRjetm_3", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetm_1", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetm_2", Region, Optimize, Rebin=Rebin)
+  make_Zn_plots("largeRjetm_3", Region, Optimize, Rebin=Rebin)

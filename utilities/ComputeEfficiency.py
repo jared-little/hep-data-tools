@@ -1,13 +1,14 @@
 import ROOT
 import csv
+from utilities import get_signal_histogram
 
 
-def CalculateAndSaveSignalEfficiency(sig, var):
+def calculate_save_signal_efficiency(sig, var):
     '''
     Calculate the signal efficiency for a given signal and variable,
     and save the results to a CSV file.
     '''
-    hsig = getSignalHistogram(sig, var)
+    hsig = get_signal_histogram(sig, var)
     
     total_signal_events = hsig.Integral(0, hsig.GetNbinsX() + 1)
     if total_signal_events == 0:

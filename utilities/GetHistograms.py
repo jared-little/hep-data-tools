@@ -43,21 +43,21 @@ def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Prese
     if not hists:
         raise RuntimeError(f"No histograms loaded for signal {Signal}")
 
-    sigHistogram = hists[0].Clone(f"{Signal}_{Region}_{Var}_sum")
-    sigHistogram.SetDirectory(0)
+    sig_histogram = hists[0].Clone(f"{Signal}_{Region}_{Var}_sum")
+    sig_histogram.SetDirectory(0)
     for hist in hists[1:]:
-        sigHistogram.Add(hist)
+        sig_histogram.Add(hist)
 
-    if "2000" in Signal: sigHistogram.SetLineColor(ROOT.kOrange)
-    if "4000" in Signal: sigHistogram.SetLineColor(ROOT.kCyan)
-    if "6000" in Signal: sigHistogram.SetLineColor(ROOT.kViolet)
+    if "2000" in Signal: sig_histogram.SetLineColor(ROOT.kOrange)
+    if "4000" in Signal: sig_histogram.SetLineColor(ROOT.kCyan)
+    if "6000" in Signal: sig_histogram.SetLineColor(ROOT.kViolet)
 
-    sigHistogram.SetLineWidth(4)
-    sigHistogram.SetLineStyle(2)
-    sigHistogram.SetDirectory(0)
-    sigHistogram.Rebin(Rebin)
+    sig_histogram.SetLineWidth(4)
+    sig_histogram.SetLineStyle(2)
+    sig_histogram.SetDirectory(0)
+    sig_histogram.Rebin(Rebin)
 
-    return sigHistogram
+    return sig_histogram
 
 
 def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None):
@@ -77,18 +77,18 @@ def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=
     if not hists:
         raise RuntimeError(f"No histograms loaded for background {Bkg}")
 
-    bkgHistogram = hists[0].Clone(f"{Bkg}_{Region}_{Var}_sum")
-    bkgHistogram.SetDirectory(0)
+    bkg_histogram = hists[0].Clone(f"{Bkg}_{Region}_{Var}_sum")
+    bkg_histogram.SetDirectory(0)
     for hist in hists[1:]:
-        bkgHistogram.Add(hist)
+        bkg_histogram.Add(hist)
 
-    bkgHistogram.Rebin(Rebin)
-    bkgHistogram.SetDirectory(0)
+    bkg_histogram.Rebin(Rebin)
+    bkg_histogram.SetDirectory(0)
 
-    return bkgHistogram
+    return bkg_histogram
 
 
-def getVarName(Var):
+def get_var_name(Var):
     """
     Get the x-axis title for a given variable.
     CURRENTLY UNUSED, SHOULD BE MOVED TO A DICTIONARY
