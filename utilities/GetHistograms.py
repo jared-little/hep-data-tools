@@ -5,20 +5,46 @@ from dotenv import load_dotenv
 load_dotenv("histograms.env")
 
 inputFolder = os.getenv("INPUT_FOLDER")
-print(inputFolder)
 
-def getSignalHistogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="All", Rebin=1, campaigns=["mc23a"]):
+def _get_detached_histogram(file_path, hist_path, clone_suffix):
+    """Load a histogram from a ROOT file and detach it from file ownership."""
+
+    root_file = ROOT.TFile.Open(file_path)
+    if not root_file or root_file.IsZombie():
+        raise FileNotFoundError(f"Could not open ROOT file: {file_path}")
+
+    hist = root_file.Get(hist_path)
+    if not hist:
+        root_file.Close()
+        raise KeyError(f"Histogram not found: {hist_path} in {file_path}")
+
+    detached = hist.Clone(f"{hist.GetName()}_{clone_suffix}")
+    detached.SetDirectory(0)
+    root_file.Close()
+
+    return detached
+
+
+def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None):
     """Get the signal histogram for a given signal, variable, region, and rebinning factor."""
+
+    if campaigns is None:
+        campaigns = ["mc23a"]
+    if not inputFolder:
+        raise RuntimeError("INPUT_FOLDER is not set. Check histograms.env")
 
     hists = []
     for campaign in campaigns:
-        file = ROOT.TFile.Open(inputFolder + campaign + "_" + Signal + "_bbWW_allhad.root")
-        hist = file.Get(f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Signal}_bbWW_allhad/{Var}")
-        # hist = file.Get(f"{Region}/bbVVSplitHadAnalysis_{Signal}_bbWW_allhad_{Region}_{Var}")
-        hists.append(hist)
+        file_path = os.path.join(inputFolder, f"{campaign}_{Signal}_bbWW_allhad.root")
+        hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Signal}_bbWW_allhad/{Var}"
+        hists.append(_get_detached_histogram(file_path, hist_path, campaign))
     
     # Sum histograms from different campaigns
-    sigHistogram = hists[0].Clone()
+    if not hists:
+        raise RuntimeError(f"No histograms loaded for signal {Signal}")
+
+    sigHistogram = hists[0].Clone(f"{Signal}_{Region}_{Var}_sum")
+    sigHistogram.SetDirectory(0)
     for hist in hists[1:]:
         sigHistogram.Add(hist)
 
@@ -34,18 +60,25 @@ def getSignalHistogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="All", R
     return sigHistogram
 
 
-def getBkgHistogram(Bkg="dijet", Var="NN_score", Region="All", Rebin=1, campaigns=["mc23a"]):
+def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None):
     """Get the background histogram for a given background, variable, region, and rebinning factor."""
+
+    if campaigns is None:
+        campaigns = ["mc23a"]
+    if not inputFolder:
+        raise RuntimeError("INPUT_FOLDER is not set. Check histograms.env")
 
     hists = []
     for campaign in campaigns:
-        file = ROOT.TFile.Open(inputFolder + campaign + "_" + Bkg + ".root")
+        file_path = os.path.join(inputFolder, f"{campaign}_{Bkg}.root")
+        hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Bkg}/{Var}"
+        hists.append(_get_detached_histogram(file_path, hist_path, campaign))
 
-        hist = file.Get(f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Bkg}/{Var}")
-        # hist = file.Get(f"{Region}/bbVVSplitHadAnalysis_{Bkg}_{Region}_{Var}")
-        hists.append(hist)
+    if not hists:
+        raise RuntimeError(f"No histograms loaded for background {Bkg}")
 
-    bkgHistogram = hists[0].Clone()
+    bkgHistogram = hists[0].Clone(f"{Bkg}_{Region}_{Var}_sum")
+    bkgHistogram.SetDirectory(0)
     for hist in hists[1:]:
         bkgHistogram.Add(hist)
 
