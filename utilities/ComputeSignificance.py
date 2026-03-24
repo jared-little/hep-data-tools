@@ -44,9 +44,9 @@ def get_Zn_histogram(sigHistoDict,bkgHisto,versus):
           else:
             h.SetBinContent(sig.GetNbinsX()-i, 100)
 
-      if "2000" in sigName: h.SetLineColor(ROOT.kOrange)
-      if "4000" in sigName: h.SetLineColor(ROOT.kCyan)
-      if "6000" in sigName: h.SetLineColor(ROOT.kViolet)
+      if "X2000" in sigName: h.SetLineColor(ROOT.kOrange)
+      if "X3000" in sigName: h.SetLineColor(ROOT.kCyan)
+      if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
       h.SetLineWidth(4)
       h.SetLineStyle(2)
       hZn.append(h)
@@ -79,9 +79,9 @@ def get_SB_histogram(sigHistoDict,bkgHisto,versus):
           else:
             h.SetBinContent(sig.GetNbinsX()-i, 100)
 
-      if "2000" in sigName: h.SetLineColor(ROOT.kOrange)
-      if "4000" in sigName: h.SetLineColor(ROOT.kCyan)
-      if "6000" in sigName: h.SetLineColor(ROOT.kViolet)
+      if "X2000" in sigName: h.SetLineColor(ROOT.kOrange)
+      if "X3000" in sigName: h.SetLineColor(ROOT.kCyan)
+      if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
       h.SetLineWidth(4)
       h.SetLineStyle(2)
       hSB.append(h)

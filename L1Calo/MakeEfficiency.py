@@ -86,8 +86,8 @@ def Make_Efficiency_Plot(filename="l1calo_hist_noTimingCuts", write=False, index
 
 
 def make_ratio_plot(efficiency1, efficiency2):
-
     """Creates a ratio plot comparing two efficiency plots."""
+
     nbin = efficiency1.GetTotalHistogram().GetNbinsX()
     bin_low = efficiency1.GetTotalHistogram().GetBinLowEdge(1)
     bin_high = efficiency1.GetTotalHistogram().GetBinLowEdge(efficiency1.GetTotalHistogram().GetNbinsX() + 1)
