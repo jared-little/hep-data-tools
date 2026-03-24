@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv("histograms.env")
+input_histograms = os.getenv("INPUT_HISTOGRAMS")
 
-input_folder = os.getenv("INPUT_FOLDER")
 
 def _get_detached_histogram(file_path, hist_path, clone_suffix):
     """Load a histogram from a ROOT file and detach it from file ownership."""
@@ -30,12 +30,12 @@ def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Prese
 
     if campaigns is None:
         campaigns = ["mc23a"]
-    if not input_folder:
-        raise RuntimeError("INPUT_FOLDER is not set. Check histograms.env")
+    if not input_histograms:
+        raise RuntimeError("INPUT HISTOGRAMS FOLDER is not set. Check histograms.env")
 
     hists = []
     for campaign in campaigns:
-        file_path = os.path.join(input_folder, f"{campaign}_{Signal}_bbWW_allhad.root")
+        file_path = os.path.join(input_histograms, f"{campaign}_{Signal}_bbWW_allhad.root")
         hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Signal}_bbWW_allhad/{Var}"
         hists.append(_get_detached_histogram(file_path, hist_path, campaign))
     
@@ -65,12 +65,12 @@ def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=
 
     if campaigns is None:
         campaigns = ["mc23a"]
-    if not input_folder:
-        raise RuntimeError("INPUT_FOLDER is not set. Check histograms.env")
+    if not input_histograms:
+        raise RuntimeError("INPUT HISTOGRAMS FOLDER is not set. Check histograms.env")
 
     hists = []
     for campaign in campaigns:
-        file_path = os.path.join(input_folder, f"{campaign}_{Bkg}.root")
+        file_path = os.path.join(input_histograms, f"{campaign}_{Bkg}.root")
         hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Bkg}/{Var}"
         hists.append(_get_detached_histogram(file_path, hist_path, campaign))
 
@@ -97,12 +97,12 @@ def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns
     
     if campaigns is None:
         campaigns = ["22"]
-    if not input_folder:
-        raise RuntimeError("INPUT_FOLDER is not set. Check histograms.env")
+    if not input_histograms:
+        raise RuntimeError("INPUT HISTOGRAMS FOLDER is not set. Check histograms.env")
 
     hists = []
     for campaign in campaigns:
-        file_path = os.path.join(input_folder, f"data{campaign}.root")
+        file_path = os.path.join(input_histograms, f"data{campaign}.root")
         hist_path = f"{region}/bbVVSplitHadAnalysis_13p6TeV_data/{Var}"
         hists.append(_get_detached_histogram(file_path, hist_path, campaign))
 
