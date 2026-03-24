@@ -1,37 +1,90 @@
 import ROOT
 import time
 from utilities.ComputeSignificance import get_efficiency_selection
-from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
+# from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
+from utilities.GetDataFrame import get_signal_df, get_background_df
 from array import array
 
 ROOT.gROOT.SetStyle("ATLAS")
 
 
+def set_bins():
+    """Set the binning for the histograms, based on the variable being plotted."""
+    bins = {
+        "NN_score": (50, 0, 1),
+        "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
+        "largeRjetpt_2": (50, 0, 1000),
+        "largeRjetpt_3": (50, 0, 1000),
+        "largeRjetm_1": (50, 0, 500),
+        "largeRjetm_2": (50, 0, 500),
+        "largeRjetm_3": (50, 0, 500)
+    }
+    return bins
+
+
+def new_columns(df):
+    """Define new columns in the RDataFrame for the variables we want to plot."""
+    df = df.Define("largeRjetpt_1", "largeRjetpt[0] / 1000")
+    df = df.Define("largeRjetpt_2", "largeRjetpt[1] / 1000")
+    df = df.Define("largeRjetpt_3", "largeRjetpt[2] / 1000")
+    df = df.Define("largeRjetm_1", "largeRjetm[0] / 1000")
+    df = df.Define("largeRjetm_2", "largeRjetm[1] / 1000")
+    df = df.Define("largeRjetm_3", "largeRjetm[2] / 1000")
+
+    return df
+
+
+def make_histogram(df, Var, selections=None):
+    """Make a histogram of a given variable from a given RDataFrame.
+    Apply selections here as well for optimization."""
+
+    bins = set_bins()[Var]
+    df = new_columns(df)
+
+    if selections is not None:
+        for sel in selections:
+            df = df.Filter(sel)
+
+    hist = df.Histo1D((f"{Var}", f"{Var}", bins[0], bins[1], bins[2]), Var)
+
+    return hist
+
+
 def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
+    
+    bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
+    sig_names = ["XHS_X2000_S1000", "XHS_X3000_S1500", "XHS_X4000_S2000"]
+    campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
+    selections = ["NN_score > 0.0"] # No selection for now, but can add later for optimization
 
-    if bg == "total":
-      hist_bkg = get_bkg_histogram("ttbar",Var, Region="Preselection", Rebin=1)
-      hist_bkg.Add(get_bkg_histogram("dijet",Var, Region="Preselection", Rebin=1))
-    else:
-      hist_bkg = get_bkg_histogram(bg,Var, Region="Preselection", Rebin=1)
+    hist_bkgs = {}
+    hist_bkg_total = None
+    for bkg in bkg_names:
+        df = get_background_df(bkg, campaigns)
+        bkg_hist = make_histogram(df, Var, selections)
+        if bkg == bkg_names[0]: hist_bkg_total = bkg_hist.Clone("hist_bkg_total")
+        else: hist_bkg_total.Add(bkg_hist.GetPtr())
+        hist_bkgs[bkg] = bkg_hist
+    hist_bkg_total.Scale(1/hist_bkg_total.Integral())
+    
+    hist_sigs = {}
+    for sig in sig_names:
+        df = get_signal_df(sig, campaigns)
+        sig_hist = make_histogram(df, Var, selections)
+        sig_hist.Scale(1/sig_hist.Integral())
+        hist_sigs[sig] = sig_hist
 
-    hist_XHS_2000_1000 = get_signal_histogram("XHS_X2000_S1000",Var, Region="Preselection", Rebin=1)
-    hist_XHS_3000_1500 = get_signal_histogram("XHS_X3000_S1500",Var, Region="Preselection", Rebin=1)
-    hist_XHS_4000_2000 = get_signal_histogram("XHS_X4000_S2000",Var, Region="Preselection", Rebin=1)
-
-    hist_bkg.Scale(1/hist_bkg.Integral())
-    hist_XHS_2000_1000.Scale(1/hist_XHS_2000_1000.Integral())
-    hist_XHS_3000_1500.Scale(1/hist_XHS_3000_1500.Integral())
-    hist_XHS_4000_2000.Scale(1/hist_XHS_4000_2000.Integral())
-
-    # hist_bkg.GetYaxis().SetTitleOffset(1.3)
-    hist_bkg.GetYaxis().SetTitleSize(0.06)
+    # hist_bkg_total.GetYaxis().SetTitleOffset(1.3)
+    hist_bkg_total.GetYaxis().SetTitleSize(0.06)
 
     canName = "Canvas_"+Var
     c = ROOT.TCanvas(canName,canName, 700, 700)
     c.cd()
 
-    hSelection_bkg = get_efficiency_selection(hist_bkg, direction)
+    hSelection_bkg = get_efficiency_selection(hist_bkg_total, direction)
+    hist_XHS_2000_1000 = hist_sigs["XHS_X2000_S1000"]
+    hist_XHS_3000_1500 = hist_sigs["XHS_X3000_S1500"]
+    hist_XHS_4000_2000 = hist_sigs["XHS_X4000_S2000"]
 
     hSelection_XHS_2000_1000 = get_efficiency_selection(hist_XHS_2000_1000, direction)
     hSelection_XHS_3000_1500 = get_efficiency_selection(hist_XHS_3000_1500, direction)
@@ -60,7 +113,7 @@ def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
       value = hSelection_XHS_4000_2000.GetBinContent(sel)
       if hSelection_XHS_4000_2000.GetBinContent(sel)>=1: sig4000.append(1.0)
       else: sig4000.append(value)
-      value = hist_bkg.Integral()-hSelection_bkg.GetBinContent(sel)
+      value = hist_bkg_total.Integral()-hSelection_bkg.GetBinContent(sel)
       if hSelection_bkg.GetBinContent(sel)<=0: bkgRejection.append(0.)
       else: bkgRejection.append(value)
 

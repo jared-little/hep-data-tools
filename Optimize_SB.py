@@ -1,46 +1,103 @@
 import ROOT
 # from utilities.ComputeSignificance import computeSignificance
 from utilities.ComputeSignificance import get_Zn_histogram, get_SB_histogram
-from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
+from utilities.GetDataFrame import get_signal_df, get_background_df
 
 ROOT.gROOT.SetStyle("ATLAS")
 
 
-def make_Zn_plots(Var, Region, optimize, Rebin=1):
+def set_bins():
+    """Set the binning for the histograms, based on the variable being plotted."""
+    bins = {
+        "NN_score": (50, 0, 1),
+        "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
+        "largeRjetpt_2": (50, 0, 1000),
+        "largeRjetpt_3": (50, 0, 1000),
+        "largeRjetm_1": (50, 0, 500),
+        "largeRjetm_2": (50, 0, 500),
+        "largeRjetm_3": (50, 0, 500)
+    }
+    return bins
+
+
+def new_columns(df):
+    """Define new columns in the RDataFrame for the variables we want to plot."""
+    df = df.Define("largeRjetpt_1", "largeRjetpt[0] / 1000")
+    df = df.Define("largeRjetpt_2", "largeRjetpt[1] / 1000")
+    df = df.Define("largeRjetpt_3", "largeRjetpt[2] / 1000")
+    df = df.Define("largeRjetm_1", "largeRjetm[0] / 1000")
+    df = df.Define("largeRjetm_2", "largeRjetm[1] / 1000")
+    df = df.Define("largeRjetm_3", "largeRjetm[2] / 1000")
+
+    return df
+
+
+def make_histogram(df, Var, selections=None):
+    """Make a histogram of a given variable from a given RDataFrame.
+    Apply selections here as well for optimization."""
+
+    bins = set_bins()[Var]
+    df = new_columns(df)
+
+    if selections is not None:
+        for sel in selections:
+            df = df.Filter(sel)
+
+    hist = df.Histo1D((f"{Var}", f"{Var}", bins[0], bins[1], bins[2]), Var)
+
+    return hist
+
+
+def make_Zn_plots(Var, optimize, selections=None):
     """Make plots of the Zn or S/B as a function of the cut value on a given variable, for a given region and rebinning factor."""
 
-    # fOutput = ROOT.TFile("ZnOptimizer-XHS.root","UPDATE")
-
     bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
+    sig_names = ["XHS_X2000_S1000", "XHS_X3000_S1500", "XHS_X4000_S2000"]
     campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
+    
 
-    hist_bkgs = {name: get_bkg_histogram(name, Var, Region, Rebin, campaigns) for name in bkg_names}
     colors = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2, ROOT.kMagenta, ROOT.kCyan+1]
 
-    hist_XHS_X2000_S1000 = get_signal_histogram("XHS_X2000_S1000", Var, Region, Rebin, campaigns)
-    hist_XHS_X3000_S1500 = get_signal_histogram("XHS_X3000_S1500", Var, Region, Rebin, campaigns)
-    hist_XHS_X4000_S2000 = get_signal_histogram("XHS_X4000_S2000", Var, Region, Rebin, campaigns)
+    hist_bkgs = {}
+    for bkg in bkg_names:
+        df = get_background_df(bkg, campaigns)
+        # print(f"Background: {bkg}, number of entries: {df.Count().GetValue()}")
+        bkg_hist = make_histogram(df, Var, selections)
+        # bkg_hist.Rebin(Rebin)
+        bkg_hist.SetFillColor(colors[bkg_names.index(bkg)])
+        bkg_hist.SetLineWidth(1)
+        hist_bkgs[bkg] = bkg_hist
 
-    sigHistoDict = {
-        "X2000_S1000": hist_XHS_X2000_S1000,
-        "X3000_S1500": hist_XHS_X3000_S1500,
-        "X4000_S2000": hist_XHS_X4000_S2000
-    }
+    hist_sigs = {}
+    for sig in sig_names:
+        df = get_signal_df(sig, campaigns)
+        sig_hist = make_histogram(df, Var, selections)
+        hist_sigs[sig] = sig_hist
 
-    Stack = ROOT.THStack()
+    stack = ROOT.THStack()
     for id, (k, v) in enumerate(reversed(list(hist_bkgs.items()))):
+        print(f"Background: {k}, number of entries: {v.GetEntries()}")
+        print(f"Type: {type(v)}, number of bins: {v.GetNbinsX()}, integral: {v.Integral()}")
         # For calculating zn or s/b
         if id == 0: bkgHisto = v.Clone()
-        else: bkgHisto.Add(v)
+        else: bkgHisto.Add(v.GetPtr())
         v.SetFillColor(colors[id])
         v.SetLineWidth(1)
         v.SetName("h"+k)
-        Stack.Add(v)
+        stack.Add(v.GetPtr())
+    
+    for sig_name, sig_hist in hist_sigs.items():
+        sig_hist.SetLineWidth(4)
+        sig_hist.SetLineStyle(2)
+        print(f"Signal: {sig_name}, number of entries: {sig_hist.GetEntries()}")
+        if "X2000" in sig_name: sig_hist.SetLineColor(ROOT.kOrange)
+        if "X3000" in sig_name: sig_hist.SetLineColor(ROOT.kCyan)
+        if "X4000" in sig_name: sig_hist.SetLineColor(ROOT.kViolet)
 
-    canName = Var+"_Upper"
-    c = ROOT.TCanvas(canName,canName, 700, 600)
+    can_name = Var+"_Upper"
+    c = ROOT.TCanvas(can_name,can_name, 700, 600)
     c.cd()
-    pad1 = ROOT.TPad(canName+"_pad1", canName+"_pad1", 0., 0.305, .99, 1)
+    pad1 = ROOT.TPad(can_name+"_pad1", can_name+"_pad1", 0., 0.305, .99, 1)
     pad1.SetLogy(1)
     pad1.SetLeftMargin(0.12)
     pad1.SetRightMargin(0.03)
@@ -58,26 +115,26 @@ def make_Zn_plots(Var, Region, optimize, Rebin=1):
     leg.SetBorderSize(0)
 
     bkgHisto.Draw("E2 same")
-    Stack.Draw("HIST")
-    Stack.GetXaxis().SetLabelOffset(0.2)
-    Stack.GetYaxis().SetTitle("Entries")
-    Stack.GetYaxis().SetTitleOffset(1)
-    Stack.GetYaxis().SetLabelSize(0.055)
-    Stack.GetYaxis().SetTitleSize(0.06)
-    Stack.SetMinimum(0.01)
-    Stack.SetMaximum(10**6)
+    stack.Draw("HIST")
+    stack.GetXaxis().SetLabelOffset(0.2)
+    stack.GetYaxis().SetTitle("Entries")
+    stack.GetYaxis().SetTitleOffset(1)
+    stack.GetYaxis().SetLabelSize(0.055)
+    stack.GetYaxis().SetTitleSize(0.06)
+    stack.SetMinimum(0.01)
+    stack.SetMaximum(10**6)
 
-    for sigName, sigHist in sigHistoDict.items():
-        sigHist.Draw("HIST same")
-        leg.AddEntry(sigHist, "#font[42]{"+sigName+"}", "l")
+    for sig_name, sig_hist in hist_sigs.items():
+        leg.AddEntry(sig_hist.GetPtr(), "#font[42]{"+sig_name+"}", "l")
+        sig_hist.Draw("HIST same")
 
     for k, v in hist_bkgs.items():
-       leg.AddEntry(v,"#font[42]{"+k+"}","f")
+       leg.AddEntry(v.GetPtr(),"#font[42]{"+k+"}","f")
 
     leg.Draw()
 
     c.cd()
-    pad2 = ROOT.TPad(canName+"_pad2", canName+"_pad2", 0., 0.01, .99, 0.295)
+    pad2 = ROOT.TPad(can_name+"_pad2", can_name+"_pad2", 0., 0.01, .99, 0.295)
     pad2.SetTopMargin(0.05)
     pad2.SetLeftMargin(0.12)
     pad2.SetRightMargin(0.03)
@@ -88,8 +145,8 @@ def make_Zn_plots(Var, Region, optimize, Rebin=1):
     pad2.Draw()
     pad2.cd()
 
-    if optimize == "Zn": hZnUpper, ymax = get_Zn_histogram(sigHistoDict,bkgHisto,"upper")
-    else: hZnUpper, ymax = get_SB_histogram(sigHistoDict,bkgHisto,"upper")
+    if optimize == "Zn": hZnUpper, ymax = get_Zn_histogram(hist_sigs, bkgHisto,"upper")
+    else: hZnUpper, ymax = get_SB_histogram(hist_sigs, bkgHisto, "upper")
 
     for h in hZnUpper:
         h.GetXaxis().SetTitle(Var)
@@ -109,24 +166,21 @@ def make_Zn_plots(Var, Region, optimize, Rebin=1):
     for k in range(1,len(hZnUpper)): hZnUpper[k].Draw("same")
     ROOT.gPad.RedrawAxis()
 
-    if optimize == "Zn": c.SaveAs(f"plots/Optimize/ZnOptimizer-{Region}-{Var}.pdf")
-    else: c.SaveAs(f"plots/Optimize/SBOptimizer-{Region}-{Var}.pdf")
+    if optimize == "Zn": c.SaveAs(f"plots/Optimize/ZnOptimizer-{Var}.pdf")
+    else: c.SaveAs(f"plots/Optimize/SBOptimizer-{Var}.pdf")
 
 
 if __name__ == "__main__":
 
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)
-    Rebin=1
-    Region = "All" # "Preselection" or "All"
     Optimize = "Zn" # "Zn" or "SB"
+    selections = ["NN_score > 0.8"]
 
-    make_Zn_plots("NN_score", Region, Optimize, Rebin=Rebin)
-
-    make_Zn_plots("largeRjetpt_1", Region, Optimize, Rebin=Rebin)
-    make_Zn_plots("largeRjetpt_2", Region, Optimize, Rebin=Rebin)
-    make_Zn_plots("largeRjetpt_3", Region, Optimize, Rebin=Rebin)
-
-    make_Zn_plots("largeRjetm_1", Region, Optimize, Rebin=Rebin)
-    make_Zn_plots("largeRjetm_2", Region, Optimize, Rebin=Rebin)
-    make_Zn_plots("largeRjetm_3", Region, Optimize, Rebin=Rebin)
+    make_Zn_plots("NN_score", Optimize, selections)
+    make_Zn_plots("largeRjetpt_1", Optimize, selections)
+    make_Zn_plots("largeRjetpt_2", Optimize, selections)
+    make_Zn_plots("largeRjetpt_3", Optimize, selections)
+    make_Zn_plots("largeRjetm_1", Optimize, selections)
+    make_Zn_plots("largeRjetm_2", Optimize, selections)
+    make_Zn_plots("largeRjetm_3", Optimize, selections)
