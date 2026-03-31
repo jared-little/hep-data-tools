@@ -1,9 +1,33 @@
 import ROOT
-# from utilities.ComputeSignificance import computeSignificance
 from utilities.ComputeSignificance import get_Zn_histogram, get_SB_histogram
 from utilities.GetDataFrame import get_signal_df, get_background_df
 
 ROOT.gROOT.SetStyle("ATLAS")
+
+
+def make_canvas(name ="canvas", left_margin=0.12, right_margin=0.03):
+    """Make a canvas for plotting."""
+
+    canvas = ROOT.TCanvas(name, name, 800, 600)
+    pad1 = ROOT.TPad("pad1", "pad1", 0., 0.305, .99, 1)
+    pad1.SetLeftMargin(left_margin)
+    pad1.SetRightMargin(right_margin)
+    pad1.SetBottomMargin(0.025)
+    pad1.SetTopMargin(0.05)
+    pad1.SetFillColor(ROOT.kWhite)
+    pad1.SetTickx()
+    pad1.SetTicky()
+
+    pad2 = ROOT.TPad("pad2", "pad2", 0., 0.01, .99, 0.295)
+    pad2.SetTopMargin(0.05)
+    pad2.SetLeftMargin(left_margin)
+    pad2.SetRightMargin(right_margin)
+    pad2.SetBottomMargin(0.38)
+    pad2.SetFillColor(ROOT.kWhite)
+    pad2.SetTickx()
+    pad2.SetTicky()
+
+    return canvas, pad1, pad2
 
 
 def set_bins():
@@ -13,9 +37,9 @@ def set_bins():
         "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
         "largeRjetpt_2": (50, 0, 1000),
         "largeRjetpt_3": (50, 0, 1000),
-        "largeRjetm_1": (50, 0, 500),
-        "largeRjetm_2": (50, 0, 500),
-        "largeRjetm_3": (50, 0, 500)
+        "largeRjetm_1": (70, 30, 100),
+        "largeRjetm_2": (120, 30, 150),
+        "largeRjetm_3": (70, 30, 100)
     }
     return bins
 
@@ -61,9 +85,7 @@ def make_Zn_plots(Var, optimize, selections=None):
     hist_bkgs = {}
     for bkg in bkg_names:
         df = get_background_df(bkg, campaigns)
-        # print(f"Background: {bkg}, number of entries: {df.Count().GetValue()}")
         bkg_hist = make_histogram(df, Var, selections)
-        # bkg_hist.Rebin(Rebin)
         bkg_hist.SetFillColor(colors[bkg_names.index(bkg)])
         bkg_hist.SetLineWidth(1)
         hist_bkgs[bkg] = bkg_hist
@@ -76,9 +98,6 @@ def make_Zn_plots(Var, optimize, selections=None):
 
     stack = ROOT.THStack()
     for id, (k, v) in enumerate(reversed(list(hist_bkgs.items()))):
-        print(f"Background: {k}, number of entries: {v.GetEntries()}")
-        print(f"Type: {type(v)}, number of bins: {v.GetNbinsX()}, integral: {v.Integral()}")
-        # For calculating zn or s/b
         if id == 0: bkgHisto = v.Clone()
         else: bkgHisto.Add(v.GetPtr())
         v.SetFillColor(colors[id])
@@ -89,23 +108,14 @@ def make_Zn_plots(Var, optimize, selections=None):
     for sig_name, sig_hist in hist_sigs.items():
         sig_hist.SetLineWidth(4)
         sig_hist.SetLineStyle(2)
-        print(f"Signal: {sig_name}, number of entries: {sig_hist.GetEntries()}")
         if "X2000" in sig_name: sig_hist.SetLineColor(ROOT.kOrange)
         if "X3000" in sig_name: sig_hist.SetLineColor(ROOT.kCyan)
         if "X4000" in sig_name: sig_hist.SetLineColor(ROOT.kViolet)
 
-    can_name = Var+"_Upper"
-    c = ROOT.TCanvas(can_name,can_name, 700, 600)
-    c.cd()
-    pad1 = ROOT.TPad(can_name+"_pad1", can_name+"_pad1", 0., 0.305, .99, 1)
-    pad1.SetLogy(1)
-    pad1.SetLeftMargin(0.12)
-    pad1.SetRightMargin(0.03)
-    pad1.SetBottomMargin(0.025)
-    pad1.SetTopMargin(0.05)
-    pad1.SetFillColor(ROOT.kWhite)
-    pad1.SetTickx()
-    pad1.SetTicky()
+    canvas, pad1, pad2 = make_canvas()
+
+
+    canvas.cd()
     pad1.Draw()
     pad1.cd()
 
@@ -133,15 +143,7 @@ def make_Zn_plots(Var, optimize, selections=None):
 
     leg.Draw()
 
-    c.cd()
-    pad2 = ROOT.TPad(can_name+"_pad2", can_name+"_pad2", 0., 0.01, .99, 0.295)
-    pad2.SetTopMargin(0.05)
-    pad2.SetLeftMargin(0.12)
-    pad2.SetRightMargin(0.03)
-    pad2.SetBottomMargin(0.38)
-    pad2.SetFillColor(ROOT.kWhite)
-    pad2.SetTickx()
-    pad2.SetTicky()
+    canvas.cd()
     pad2.Draw()
     pad2.cd()
 
@@ -166,8 +168,8 @@ def make_Zn_plots(Var, optimize, selections=None):
     for k in range(1,len(hZnUpper)): hZnUpper[k].Draw("same")
     ROOT.gPad.RedrawAxis()
 
-    if optimize == "Zn": c.SaveAs(f"plots/Optimize/ZnOptimizer-{Var}.pdf")
-    else: c.SaveAs(f"plots/Optimize/SBOptimizer-{Var}.pdf")
+    if optimize == "Zn": canvas.SaveAs(f"plots/Optimize/ZnOptimizer-{Var}.pdf")
+    else: canvas.SaveAs(f"plots/Optimize/SBOptimizer-{Var}.pdf")
 
 
 if __name__ == "__main__":
@@ -175,7 +177,10 @@ if __name__ == "__main__":
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)
     Optimize = "Zn" # "Zn" or "SB"
-    selections = ["NN_score > 0.8"]
+
+    # Preselections
+    selections = ["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"]
+    selections.extend(["largeRjetpt_1 > 500", "largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
 
     make_Zn_plots("NN_score", Optimize, selections)
     make_Zn_plots("largeRjetpt_1", Optimize, selections)

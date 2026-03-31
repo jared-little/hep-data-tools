@@ -1,7 +1,6 @@
 import ROOT
 import time
 from utilities.ComputeSignificance import get_efficiency_selection
-# from utilities.GetHistograms import get_signal_histogram, get_bkg_histogram
 from utilities.GetDataFrame import get_signal_df, get_background_df
 from array import array
 
@@ -13,11 +12,11 @@ def set_bins():
     bins = {
         "NN_score": (50, 0, 1),
         "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
-        "largeRjetpt_2": (50, 0, 1000),
-        "largeRjetpt_3": (50, 0, 1000),
-        "largeRjetm_1": (50, 0, 500),
-        "largeRjetm_2": (50, 0, 500),
-        "largeRjetm_3": (50, 0, 500)
+        "largeRjetpt_2": (80, 200, 1000),
+        "largeRjetpt_3": (80, 200, 1000),
+        "largeRjetm_1": (60, 40, 100),
+        "largeRjetm_2": (110, 40, 150),
+        "largeRjetm_3": (60, 40, 100)
     }
     return bins
 
@@ -50,12 +49,11 @@ def make_histogram(df, Var, selections=None):
     return hist
 
 
-def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
+def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total", selections=None, print_efficiencies=False):
     
     bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
     sig_names = ["XHS_X2000_S1000", "XHS_X3000_S1500", "XHS_X4000_S2000"]
     campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
-    selections = ["NN_score > 0.0"] # No selection for now, but can add later for optimization
 
     hist_bkgs = {}
     hist_bkg_total = None
@@ -81,40 +79,43 @@ def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
     c = ROOT.TCanvas(canName,canName, 700, 700)
     c.cd()
 
-    hSelection_bkg = get_efficiency_selection(hist_bkg_total, direction)
-    hist_XHS_2000_1000 = hist_sigs["XHS_X2000_S1000"]
-    hist_XHS_3000_1500 = hist_sigs["XHS_X3000_S1500"]
-    hist_XHS_4000_2000 = hist_sigs["XHS_X4000_S2000"]
+    h_eff_bkg = get_efficiency_selection(hist_bkg_total, direction)
+    h_2000_1000 = hist_sigs["XHS_X2000_S1000"]
+    h_3000_1500 = hist_sigs["XHS_X3000_S1500"]
+    h_4000_2000 = hist_sigs["XHS_X4000_S2000"]
 
-    hSelection_XHS_2000_1000 = get_efficiency_selection(hist_XHS_2000_1000, direction)
-    hSelection_XHS_3000_1500 = get_efficiency_selection(hist_XHS_3000_1500, direction)
-    hSelection_XHS_4000_2000 = get_efficiency_selection(hist_XHS_4000_2000, direction)
+    h_eff_2000_1000 = get_efficiency_selection(h_2000_1000, direction)
+    h_eff_3000_1500 = get_efficiency_selection(h_3000_1500, direction)
+    h_eff_4000_2000 = get_efficiency_selection(h_4000_2000, direction)
 
     n = 0
-    nSteps = 30
-    if "jetm" in Var: nSteps = 60
+    print(f"bkg bins: {h_eff_bkg.GetNbinsX()}, sig bins: {h_eff_2000_1000.GetNbinsX()}")
+    # nSteps = 30
+    nSteps = h_eff_bkg.GetNbinsX()
+    # if "jetm" in Var: nSteps = 800
     sig2000,sig3000,sig4000 = array('d'),array('d'),array('d')
     bkgRejection, ttbarRejection, dijetRejection = array('d'),array('d'),array('d')
 
     for sel in range(1,nSteps):
       n+=1
-      print(
-        "Variable:", Var, "\tbin:", hSelection_XHS_2000_1000.GetBinLowEdge(sel), 
-        "\tbkg Rejection:", 1-hSelection_bkg.GetBinContent(sel), 
-        "\tEff. 2000:", hSelection_XHS_2000_1000.GetBinContent(sel),
-        "\tEff. 3000:", hSelection_XHS_3000_1500.GetBinContent(sel), 
-        "\tEff. 4000:", hSelection_XHS_4000_2000.GetBinContent(sel))
-      value = hSelection_XHS_2000_1000.GetBinContent(sel)
-      if hSelection_XHS_2000_1000.GetBinContent(sel)>=1: sig2000.append(1.0)
+      if print_efficiencies:
+        print(
+            "Variable:", Var, "\tbin:", h_eff_2000_1000.GetBinLowEdge(sel), 
+            "\tbkg Rejection:", 1-h_eff_bkg.GetBinContent(sel), 
+            "\tEff. 2000:", h_eff_2000_1000.GetBinContent(sel),
+            "\tEff. 3000:", h_eff_3000_1500.GetBinContent(sel), 
+            "\tEff. 4000:", h_eff_4000_2000.GetBinContent(sel))
+      value = h_eff_2000_1000.GetBinContent(sel)
+      if h_eff_2000_1000.GetBinContent(sel)>=1: sig2000.append(1.0)
       else: sig2000.append(value)
-      value = hSelection_XHS_3000_1500.GetBinContent(sel)
-      if hSelection_XHS_3000_1500.GetBinContent(sel)>=1: sig3000.append(1.0)
+      value = h_eff_3000_1500.GetBinContent(sel)
+      if h_eff_3000_1500.GetBinContent(sel)>=1: sig3000.append(1.0)
       else: sig3000.append(value)
-      value = hSelection_XHS_4000_2000.GetBinContent(sel)
-      if hSelection_XHS_4000_2000.GetBinContent(sel)>=1: sig4000.append(1.0)
+      value = h_eff_4000_2000.GetBinContent(sel)
+      if h_eff_4000_2000.GetBinContent(sel)>=1: sig4000.append(1.0)
       else: sig4000.append(value)
-      value = hist_bkg_total.Integral()-hSelection_bkg.GetBinContent(sel)
-      if hSelection_bkg.GetBinContent(sel)<=0: bkgRejection.append(0.)
+      value = hist_bkg_total.Integral()-h_eff_bkg.GetBinContent(sel)
+      if h_eff_bkg.GetBinContent(sel)<=0: bkgRejection.append(0.)
       else: bkgRejection.append(value)
 
     gROC_total = ROOT.TGraph(n,sig2000,bkgRejection)
@@ -124,78 +125,70 @@ def MakeROC(Var="largeRjetpt", VarName="", direction="upper", bg="total"):
     else: gROC_total.GetYaxis().SetTitle('jj Rejection')
     gROC_total.Draw("AL")
     ROOT.gPad.RedrawAxis()
-    c.SaveAs("plots/ROC/ROC_total_"+Var+"_"+direction+"_"+bg+".pdf")
+    c.SaveAs("plots/ROC/ROC_"+Var+"_"+direction+"_"+bg+".pdf")
 
     return gROC_total
 
 
-def combine_ROCs(bkg="total"):
+def combine_ROCs(bkg="total", variables = ["largeRjetpt_1"], selections=None):
+
+    style = {
+        "largeRjetpt_1": [ROOT.kBlue, "Jet 1 - P_{T}"],
+        "largeRjetpt_2": [ROOT.kRed, "Jet 2 - P_{T}"],
+        "largeRjetpt_3": [ROOT.kGreen+2, "Jet 3 - P_{T}"],
+        "largeRjetm_1": [ROOT.kMagenta, "Jet 1 - M"],
+        "largeRjetm_2": [ROOT.kCyan+1, "Jet 2 - M"],
+        "largeRjetm_3": [ROOT.kOrange+1, "Jet 3 - M"]
+    }
 
     canName = "Canvas"
     c = ROOT.TCanvas(canName,canName, 700, 700)
     c.cd()
-
-    ROC_jet1pt = MakeROC(Var="largeRjetpt_1", VarName="p_{T}^{Jet 1}", direction="upper",bg=bkg)
-    ROC_jet2pt = MakeROC(Var="largeRjetpt_2", VarName="p_{T}^{Jet 2}", direction="upper",bg=bkg)
-    ROC_jet3pt = MakeROC(Var="largeRjetpt_3", VarName="p_{T}^{Jet 3}", direction="upper",bg=bkg)
-    ROC_jet1m = MakeROC(Var="largeRjetm_1", VarName="m_{Jet 1}", direction="upper",bg=bkg)
-    ROC_jet2m = MakeROC(Var="largeRjetm_2", VarName="m_{Jet 2}", direction="upper",bg=bkg)
-    ROC_jet3m = MakeROC(Var="largeRjetm_3", VarName="m_{Jet 3}", direction="upper",bg=bkg)
-
+    roc_dict = {}
     multiGraph = ROOT.TMultiGraph()
-    multiGraph.Add(ROC_jet1pt)
-    multiGraph.Add(ROC_jet2pt)
-    multiGraph.Add(ROC_jet3pt)
-    multiGraph.Add(ROC_jet1m)
-    multiGraph.Add(ROC_jet2m)
-    multiGraph.Add(ROC_jet3m)
-
-    ROC_jet1pt.SetLineWidth(2)
-    ROC_jet2pt.SetLineColor(11)
-    ROC_jet2pt.SetLineWidth(2)
-    ROC_jet3pt.SetLineColor(3)
-    ROC_jet3pt.SetLineWidth(2)
-    ROC_jet1m.SetLineColor(4)
-    ROC_jet1m.SetLineWidth(2)
-    ROC_jet2m.SetLineColor(5)
-    ROC_jet2m.SetLineWidth(2)
-    ROC_jet3m.SetLineColor(6)
-    ROC_jet3m.SetLineWidth(2)
-    multiGraph.GetXaxis().SetTitle('Signal Efficiency')
-    if bkg=="total": multiGraph.GetYaxis().SetTitle('Background Rejection')
-    elif bkg=="ttbar": multiGraph.GetYaxis().SetTitle('t#bar{t} Rejection')
-    else: multiGraph.GetYaxis().SetTitle('jj Rejection')
     leg = ROOT.TLegend(0.75, 0.65, 0.95, 0.9, "")
     leg.SetFillStyle(0)
     leg.SetFillColor(0)
     leg.SetBorderSize(0)
-    leg.SetTextSize(0.025)
-    leg.AddEntry(ROC_jet1pt, "p_{T}^{Jet 1}", "L")
-    leg.AddEntry(ROC_jet2pt, "p_{T}^{Jet 2}", "L")
-    leg.AddEntry(ROC_jet3pt, "p_{T}^{Jet 3}", "L")
-    leg.AddEntry(ROC_jet1m, "m^{Jet 1}", "L")
-    leg.AddEntry(ROC_jet2m, "m^{Jet 2}", "L")
-    leg.AddEntry(ROC_jet3m, "m^{Jet 3}", "L")
 
-    # multiGraph.Draw("apc")
+    for var in variables:
+        roc = MakeROC(Var=var, VarName=var, direction="upper", bg=bkg, selections = selections)
+        roc_dict[var] = roc
+        multiGraph.Add(roc)
+        leg.AddEntry(roc, style[var][1], "L")
+        ROOT.gPad.RedrawAxis()
+
+    for var, roc in roc_dict.items():
+        print(f"Index: {variables.index(var)}, Variable: {var}")
+        roc.SetLineWidth(2)
+        roc.SetLineColor(style[var][0])
+        roc.Draw("L")
+
+    multiGraph.GetXaxis().SetTitle('Signal Efficiency')
+    multiGraph.GetYaxis().SetTitle('Background Rejection')
+    # multiGraph.GetXaxis().SetLimits(0.8,1.0)
+    # multiGraph.GetYaxis().SetRangeUser(0.0, 0.5)
     multiGraph.Draw("AL")
     leg.Draw()
 
     ROOT.gPad.RedrawAxis()
-    c.SaveAs("plots/ROC/ROC_Combined_ " + bkg + ".pdf")
+    c.SaveAs("plots/ROC/ROC_Combined_" + bkg + ".pdf")
+
 
 if __name__ == "__main__":
-
 
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)
 
     start_time = time.time()
-    combine_ROCs("total")
+    selections = ["NN_score > 0.5", "largeRjetm_1 > 75", "largeRjetm_2 > 75", "largeRjetm_3 > 70"]
+
+    variables = ["largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3", "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
+    combine_ROCs("total", variables, selections)
     # combine_ROCs("ttbar")
     # combine_ROCs("dijet")
 
-    # MakeROC(Var="largeRjetpt_1", VarName="p_{T}^{Jet 1}", direction="upper",bg="total")
+    # MakeROC(Var="largeRjetpt_1", VarName="p_{T}^{Jet 1}", direction="upper",bg="total", print_efficiencies=True)
     # MakeROC(Var="largeRjetpt_2", VarName="p_{T}^{Jet 2}", direction="upper",bg="total")
     # MakeROC(Var="largeRjetpt_3", VarName="p_{T}^{Jet 1}", direction="upper",bg="total")
     # MakeROC(Var="largeRjetm_1", VarName="p_{T}^{Jet 1}", direction="upper",bg="total")
