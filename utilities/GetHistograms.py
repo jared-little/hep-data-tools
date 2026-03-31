@@ -54,6 +54,11 @@ def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Prese
 
     sig_histogram.SetLineWidth(4)
     sig_histogram.SetLineStyle(2)
+    sig_histogram.GetXaxis().SetTitle(get_var_name(Var))
+    sig_histogram.GetXaxis().SetLabelSize(0.13)
+    sig_histogram.GetXaxis().SetLabelOffset(0.02)
+    sig_histogram.GetXaxis().SetTitleSize(0.15)
+
     sig_histogram.SetDirectory(0)
     sig_histogram.Rebin(Rebin)
 
@@ -87,6 +92,10 @@ def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=
     bkg_histogram.GetYaxis().SetLabelSize(0.05)
     bkg_histogram.GetYaxis().SetTitleSize(0.1)
     bkg_histogram.GetYaxis().SetTitleOffset(0.6)
+    bkg_histogram.GetXaxis().SetTitle(get_var_name(Var))
+    bkg_histogram.GetXaxis().SetLabelSize(0.13)
+    bkg_histogram.GetXaxis().SetLabelOffset(0.02)
+    bkg_histogram.GetXaxis().SetTitleSize(0.15)
     bkg_histogram.SetDirectory(0)
 
     return bkg_histogram
@@ -115,6 +124,14 @@ def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns
         data_histogram.Add(hist)
 
     data_histogram.Rebin(rebin)
+
+    if Var == "NN_score":
+        # Blind data in the signal-sensitive tail.
+        for bin_idx in range(1, data_histogram.GetNbinsX() + 1):
+            if data_histogram.GetXaxis().GetBinCenter(bin_idx) > 0.5:
+                data_histogram.SetBinContent(bin_idx, 0.0)
+                data_histogram.SetBinError(bin_idx, 0.0)
+
     data_histogram.SetMarkerStyle(20)
     # data_histogram.SetMarkerSize(1.2)
     data_histogram.SetDirectory(0)
@@ -134,6 +151,9 @@ def get_var_name(Var):
         "largeRjetm_1": "Leading Large-R UFO Jet Mass",
         "largeRjetm_2": "Subleading Large-R UFO Jet Mass",
         "largeRjetm_3": "Third Leading Large-R UFO Jet Mass",
+        "largeRjetpt": "Leading Large-R UFO Jet p_{T}",
+        "largeRjetm": "Leading Large-R UFO Jet Mass",
+        "NLargeRjets": "Number of Large-R UFO Jets"
     }
 
     return var_name[Var]

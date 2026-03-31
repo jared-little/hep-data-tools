@@ -110,13 +110,13 @@ if __name__ == "__main__":
     ROOT.gROOT.SetBatch(True)
 
     inputFolder = "/data/jlittle/HHARDout/Out_SplitHad/Hists/"
-    Variable = ["NN_score", "largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3", "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
-    Region = "Preselection"
+    Variable = ["NN_score", "largeRjetpt", "largeRjetm", "NLargeRjets"]
+    # Variable = ["NN_score"]
+
+    Regions = ["Preselection", "Preselection_CR0", "Preselection_VR2", "Preselection_CR2"]
     campaigns = ["mc23a", "mc23d", "mc23e"]
     rebin = 2
 
     for Var in Variable:
-        plot_data_mc(Var, Region, rebin=rebin, campaigns=campaigns)
-    # plot_data_mc(Var, "CR0", rebin=rebin, campaigns=campaigns)
-    # plot_data_mc(Var, "CR1", rebin=rebin, campaigns=campaigns)
-    # plot_data_mc(Var, "CR2", rebin=rebin, campaigns=campaigns)
+        for Region in Regions:
+            plot_data_mc(Var, Region, rebin=1, campaigns=campaigns) if Var == "NLargeRjets" else plot_data_mc(Var, Region, rebin=rebin, campaigns=campaigns)

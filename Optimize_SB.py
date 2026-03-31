@@ -17,6 +17,7 @@ def make_canvas(name ="canvas", left_margin=0.12, right_margin=0.03):
     pad1.SetFillColor(ROOT.kWhite)
     pad1.SetTickx()
     pad1.SetTicky()
+    pad1.SetLogy(1)
 
     pad2 = ROOT.TPad("pad2", "pad2", 0., 0.01, .99, 0.295)
     pad2.SetTopMargin(0.05)
@@ -34,6 +35,7 @@ def set_bins():
     """Set the binning for the histograms, based on the variable being plotted."""
     bins = {
         "NN_score": (50, 0, 1),
+        "Hbb_bjR_mass": (50, 0, 300),
         "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
         "largeRjetpt_2": (50, 0, 1000),
         "largeRjetpt_3": (50, 0, 1000),
@@ -70,6 +72,19 @@ def make_histogram(df, Var, selections=None):
     hist = df.Histo1D((f"{Var}", f"{Var}", bins[0], bins[1], bins[2]), Var)
 
     return hist
+
+
+def calculate_yields(df, Var, selections=None):
+    """Calculate the yields for a given variable and selections."""
+    df = new_columns(df)
+
+    if selections is not None:
+        for sel in selections:
+            df = df.Filter(sel)
+
+    yield_ = df.Count().GetValue()
+
+    return yield_
 
 
 def make_Zn_plots(Var, optimize, selections=None):
@@ -126,11 +141,7 @@ def make_Zn_plots(Var, optimize, selections=None):
 
     bkgHisto.Draw("E2 same")
     stack.Draw("HIST")
-    stack.GetXaxis().SetLabelOffset(0.2)
     stack.GetYaxis().SetTitle("Entries")
-    stack.GetYaxis().SetTitleOffset(1)
-    stack.GetYaxis().SetLabelSize(0.055)
-    stack.GetYaxis().SetTitleSize(0.06)
     stack.SetMinimum(0.01)
     stack.SetMaximum(10**6)
 
@@ -152,17 +163,7 @@ def make_Zn_plots(Var, optimize, selections=None):
 
     for h in hZnUpper:
         h.GetXaxis().SetTitle(Var)
-        h.GetXaxis().SetLabelSize(0.13)
-        h.GetXaxis().SetLabelOffset(0.02)
-        h.GetXaxis().SetTitleSize(0.15)
-
         h.GetYaxis().SetRangeUser(0.,ymax+0.5)
-        h.GetYaxis().SetNdivisions(505)
-        if optimize == "Zn": h.GetYaxis().SetTitle("Zn")
-        else: h.GetYaxis().SetTitle("S / B")
-        h.GetYaxis().SetLabelSize(0.13)
-        h.GetYaxis().SetTitleSize(0.17)
-        h.GetYaxis().SetTitleOffset(0.36)
 
     hZnUpper[0].Draw()
     for k in range(1,len(hZnUpper)): hZnUpper[k].Draw("same")
@@ -176,16 +177,16 @@ if __name__ == "__main__":
 
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)
-    Optimize = "Zn" # "Zn" or "SB"
+    Optimize = "SB" # "Zn" or "SB"
+
+    Vars = ["NN_score", "Hbb_bjR_mass"]
+    # Vars = ["NN_score",
+    #         "largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3",
+    #         "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
 
     # Preselections
     selections = ["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"]
     selections.extend(["largeRjetpt_1 > 500", "largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
 
-    make_Zn_plots("NN_score", Optimize, selections)
-    make_Zn_plots("largeRjetpt_1", Optimize, selections)
-    make_Zn_plots("largeRjetpt_2", Optimize, selections)
-    make_Zn_plots("largeRjetpt_3", Optimize, selections)
-    make_Zn_plots("largeRjetm_1", Optimize, selections)
-    make_Zn_plots("largeRjetm_2", Optimize, selections)
-    make_Zn_plots("largeRjetm_3", Optimize, selections)
+    for var in Vars:
+        make_Zn_plots(var, Optimize, selections)

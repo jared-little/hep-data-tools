@@ -49,6 +49,17 @@ def get_Zn_histogram(sigHistoDict,bkgHisto,versus):
       if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
       h.SetLineWidth(4)
       h.SetLineStyle(2)
+      
+      h.GetXaxis().SetLabelSize(0.13)
+      h.GetXaxis().SetLabelOffset(0.02)
+      h.GetXaxis().SetTitleSize(0.15)
+      h.GetYaxis().SetRangeUser(0.5,1.5)
+      h.GetYaxis().SetNdivisions(505)
+      h.GetYaxis().SetTitle("Zn")
+      h.GetYaxis().SetLabelSize(0.13)
+      h.GetYaxis().SetTitleSize(0.17)
+      h.GetYaxis().SetTitleOffset(0.36)
+
       hZn.append(h)
 
     return hZn, max
@@ -84,6 +95,16 @@ def get_SB_histogram(sigHistoDict,bkgHisto,versus):
       if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
       h.SetLineWidth(4)
       h.SetLineStyle(2)
+      h.GetXaxis().SetLabelSize(0.13)
+      h.GetXaxis().SetLabelOffset(0.02)
+      h.GetXaxis().SetTitleSize(0.15)
+      h.GetYaxis().SetRangeUser(0.5,1.5)
+      h.GetYaxis().SetNdivisions(505)
+      h.GetYaxis().SetTitle("S / B")
+      h.GetYaxis().SetLabelSize(0.13)
+      h.GetYaxis().SetTitleSize(0.17)
+      h.GetYaxis().SetTitleOffset(0.36)
+
       hSB.append(h)
 
     return hSB, max
