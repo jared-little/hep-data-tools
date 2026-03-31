@@ -14,11 +14,11 @@ def main(ntuple = False, histogram = True) -> None:
     for campaign in campaigns:
         print(f"Processing campaign: {campaign}")
         if ntuple == True:
-            in_path_glob = f"/Users/jlittle/work/HHbbVV/bbvv-presel-loose/{campaign}_sysv03_nominal/Exports/*"
-            out_path = Path("/Users/jlittle/work/HHbbVV/bbvv-presel-loose/ntuples/")
+            in_path_glob = f"/Users/jlittle/work/HHbbVV/preselection_loose/{campaign}_sysv03_nominal/Exports/*"
+            out_path = Path("/Users/jlittle/work/HHbbVV/preselection_loose/ntuples/")
         elif histogram == True:
-            in_path_glob = f"/Users/jlittle/work/HHbbVV/bbvv-presel-loose/{campaign}_sysv03_nominal/Hists/*"
-            out_path = Path("/Users/jlittle/work/HHbbVV/bbvv-presel-loose/histograms/")
+            in_path_glob = f"/Users/jlittle/work/HHbbVV/preselection_loose/{campaign}_sysv03_nominal/Hists/*"
+            out_path = Path("/Users/jlittle/work/HHbbVV/preselection_loose/histograms/")
         else:
             print("Please specify whether you want to move ntuples or histograms by setting the appropriate flag to True.")
 
@@ -37,4 +37,4 @@ def main(ntuple = False, histogram = True) -> None:
 
 
 if __name__ == "__main__":
-    main(ntuple = False, histogram = True)
+    main(ntuple = True, histogram = False)
