@@ -101,7 +101,7 @@ def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=
     return bkg_histogram
 
 
-def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns=None):
+def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns=None, blind_data=True):
     """Get the data histogram for a given variable, region, rebinning factor, and campaigns."""
     
     if campaigns is None:
@@ -125,7 +125,7 @@ def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns
 
     data_histogram.Rebin(rebin)
 
-    if Var == "NN_score":
+    if Var == "NN_score" and blind_data:
         # Blind data in the signal-sensitive tail.
         for bin_idx in range(1, data_histogram.GetNbinsX() + 1):
             if data_histogram.GetXaxis().GetBinCenter(bin_idx) > 0.5:

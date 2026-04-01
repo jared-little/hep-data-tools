@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     Regions = ["Preselection", "Preselection_CR0", "Preselection_VR2", "Preselection_CR2"]
     campaigns = ["mc23a", "mc23d", "mc23e"]
-    rebin = 2
+    rebin = 4
 
     for Var in Variable:
         for Region in Regions:
