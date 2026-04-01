@@ -6,6 +6,7 @@ from utilities.GetHistograms import get_bkg_histogram, get_data_histogram, get_v
 
 
 def make_canvas_pads():
+    """Make a canvas with two pads, one for the main plot and one for the ratio plot."""
 
     can_name = "DataMC"
     c = ROOT.TCanvas(can_name,can_name, 700, 600)
@@ -33,6 +34,7 @@ def make_canvas_pads():
 
 
 def make_ratio_plot(hist1, hist2):
+    """Make a ratio plot of hist1 / hist2, with appropriate axis labels and styling."""
 
     h_ratio = hist1.Clone("h_ratio")
     h_ratio.Divide(hist2)
@@ -52,14 +54,24 @@ def make_ratio_plot(hist1, hist2):
     return h_ratio
 
 
-def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
 
-    bkg_names = ["dijet", "ttbar","Vjets", "VV", "top"]
+def _campaigns_to_data_years(campaigns):
+    """Convert a list of campaign names to corresponding run-3 data years."""
     years = []
     for campaign in campaigns:
-        if "a" in campaign: years.append("22")
-        elif "d" in campaign: years.append("23")
-        elif "e" in campaign: years.append("24")
+        if "a" in campaign:
+            years.append("22")
+        elif "d" in campaign:
+            years.append("23")
+        elif "e" in campaign:
+            years.append("24")
+    return years
+
+def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
+    """Make a data/MC comparison plot for a given variable, region, rebinning factor, and campaigns."""
+
+    bkg_names = ["dijet", "ttbar","Vjets", "VV", "top"]
+    years = _campaigns_to_data_years(campaigns)
 
     hist_data = get_data_histogram(Var, Region, rebin, campaigns = years)
     hist_bkgs = {name: get_bkg_histogram(name, Var, Region, rebin, campaigns) for name in bkg_names}
@@ -76,7 +88,7 @@ def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
         v.SetLineWidth(1)
         v.SetName("h"+k)
         leg.AddEntry(v,"#font[42]{"+k+"}","f")
-        print(f"{k} integral: {v.Integral()}")
+        # print(f"{k} integral: {v.Integral()}")
         stack.Add(v)
 
     # bkg_histo.GetYaxis().SetTitle("Events")
@@ -110,8 +122,8 @@ if __name__ == "__main__":
     ROOT.gROOT.SetBatch(True)
 
     inputFolder = "/data/jlittle/HHARDout/Out_SplitHad/Hists/"
-    Variable = ["NN_score", "largeRjetpt", "largeRjetm", "NLargeRjets"]
-    # Variable = ["NN_score"]
+    # Variable = ["NN_score", "largeRjetpt", "largeRjetm", "NLargeRjets"]
+    Variable = ["NN_score"]
 
     Regions = ["Preselection", "Preselection_CR0", "Preselection_VR2", "Preselection_CR2"]
     campaigns = ["mc23a", "mc23d", "mc23e"]
