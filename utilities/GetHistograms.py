@@ -145,6 +145,7 @@ def get_var_name(Var):
     """
     var_name = {
         "NN_score": "NN Score",
+        "Hbb_bjR_mass": "M(H_{bb})",
         "largeRjetpt_1": "Leading Large-R UFO Jet p_{T}",
         "largeRjetpt_2": "Subleading Large-R UFO Jet p_{T}",
         "largeRjetpt_3": "Third Leading Large-R UFO Jet p_{T}",

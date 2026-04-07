@@ -22,13 +22,13 @@ def get_Zn_histogram(sigHistoDict,bkgHisto,versus):
 
     hZn = []
     max = 0 # For setting y-axis range
-    for sigName, sig in sigHistoDict.items():
-      h = ROOT.TH1D("hZn_"+sigName+"_"+versus,"",sig.GetNbinsX(),sig.GetXaxis().GetXmin(),sig.GetXaxis().GetXmax())
+    for sig_name, sig in sigHistoDict.items():
+      h = ROOT.TH1D("hZn_"+sig_name+"_"+versus,"",sig.GetNbinsX(),sig.GetXaxis().GetXmin(),sig.GetXaxis().GetXmax())
       if versus=="upper":
         for i in range(1,sig.GetNbinsX()+1):
           if bkgHisto.Integral(i,sig.GetNbinsX())>0:
             error = 0.0
-            # print(sigName+":\t" "Cut:", h.GetBinLowEdge(i), "\tSignal Events:", sig.Integral(i,sig.GetNbinsX()), "\tBackground Events:", bkgHisto.Integral(i,sig.GetNbinsX()))
+            # print(sig_name+":\t" "Cut:", h.GetBinLowEdge(i), "\tSignal Events:", sig.Integral(i,sig.GetNbinsX()), "\tBackground Events:", bkgHisto.Integral(i,sig.GetNbinsX()))
             zn = compute_significance(sig.Integral(i,sig.GetNbinsX()),bkgHisto.Integral(i,sig.GetNbinsX()),error)
             if zn > max: max = zn
             h.SetBinContent(i, zn)
@@ -44,21 +44,19 @@ def get_Zn_histogram(sigHistoDict,bkgHisto,versus):
           else:
             h.SetBinContent(sig.GetNbinsX()-i, 100)
 
-      if "X2000" in sigName: h.SetLineColor(ROOT.kOrange)
-      if "X3000" in sigName: h.SetLineColor(ROOT.kCyan)
-      if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
-      h.SetLineWidth(4)
-      h.SetLineStyle(2)
-      
-      h.GetXaxis().SetLabelSize(0.13)
-      h.GetXaxis().SetLabelOffset(0.02)
-      h.GetXaxis().SetTitleSize(0.15)
-      h.GetYaxis().SetRangeUser(0.5,1.5)
-      h.GetYaxis().SetNdivisions(505)
+      h.SetLineColor(sig.GetLineColor()) # Style keeps signal colors and line styles for easier comparison
+      h.SetLineWidth(sig.GetLineWidth())
+      h.SetLineStyle(sig.GetLineStyle())
       h.GetYaxis().SetTitle("Zn")
-      h.GetYaxis().SetLabelSize(0.13)
-      h.GetYaxis().SetTitleSize(0.17)
-      h.GetYaxis().SetTitleOffset(0.36)
+
+      # h.GetXaxis().SetLabelSize(0.13)
+      # h.GetXaxis().SetLabelOffset(0.02)
+      # h.GetXaxis().SetTitleSize(0.15)
+      # h.GetYaxis().SetRangeUser(0.5,1.5)
+      # h.GetYaxis().SetNdivisions(505)
+      # h.GetYaxis().SetLabelSize(0.13)
+      # h.GetYaxis().SetTitleSize(0.17)
+      # h.GetYaxis().SetTitleOffset(0.36)
 
       hZn.append(h)
 
@@ -90,11 +88,10 @@ def get_SB_histogram(sigHistoDict,bkgHisto,versus):
           else:
             h.SetBinContent(sig.GetNbinsX()-i, 100)
 
-      if "X2000" in sigName: h.SetLineColor(ROOT.kOrange)
-      if "X3000" in sigName: h.SetLineColor(ROOT.kCyan)
-      if "X4000" in sigName: h.SetLineColor(ROOT.kViolet)
-      h.SetLineWidth(4)
-      h.SetLineStyle(2)
+      h.SetLineColor(sig.GetLineColor()) # Style keeps signal colors and line styles for easier comparison
+      h.SetLineWidth(sig.GetLineWidth())
+      h.SetLineStyle(sig.GetLineStyle())
+
       h.GetXaxis().SetLabelSize(0.13)
       h.GetXaxis().SetLabelOffset(0.02)
       h.GetXaxis().SetTitleSize(0.15)
