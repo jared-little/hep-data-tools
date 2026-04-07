@@ -5,10 +5,9 @@ from optparse import OptionParser
 from utilities.GetHistograms import get_bkg_histogram, get_data_histogram, get_var_name
 
 
-def make_canvas_pads():
+def make_canvas_pads(can_name="DataMC"):
     """Make a canvas with two pads, one for the main plot and one for the ratio plot."""
 
-    can_name = "DataMC"
     c = ROOT.TCanvas(can_name,can_name, 700, 600)
     c.cd()
     pad1 = ROOT.TPad(can_name+"_pad1", can_name+"_pad1", 0., 0.305, .99, 1)
@@ -33,13 +32,13 @@ def make_canvas_pads():
     return c, pad1, pad2
 
 
-def make_ratio_plot(hist1, hist2):
+def make_ratio_plot(hist1, hist2, Var, Region):
     """Make a ratio plot of hist1 / hist2, with appropriate axis labels and styling."""
 
-    h_ratio = hist1.Clone("h_ratio")
+    h_ratio = hist1.Clone(f"h_ratio_{Var}_{Region}")
+    h_ratio.SetDirectory(0)
     h_ratio.Divide(hist2)
 
-    h_ratio.GetXaxis().SetTitle(get_var_name(Var))
     h_ratio.GetXaxis().SetLabelSize(0.13)
     h_ratio.GetXaxis().SetLabelOffset(0.02)
     h_ratio.GetXaxis().SetTitleSize(0.15)
@@ -92,7 +91,7 @@ def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
         stack.Add(v)
 
     # bkg_histo.GetYaxis().SetTitle("Events")
-    c, pad1, pad2 = make_canvas_pads()
+    c, pad1, pad2 = make_canvas_pads(f"DataMC_{Region}_{Var}")
     # c.cd()
     pad1.cd()
 
@@ -101,13 +100,16 @@ def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
     leg.SetBorderSize(0)
     leg.AddEntry(hist_data, "#font[42]{Data}", "p")
 
-    bkg_histo.Draw("E2 same")
-    stack.Draw("HIST same")
+    stack.SetMinimum(0.5)
+    stack.SetMaximum(10 ** 5)
+    # bkg_histo.Draw("E2 same")
+    stack.Draw("HIST")
     hist_data.Draw("eX0 same")
     leg.Draw()
 
     pad2.cd()
-    h_ratio = make_ratio_plot(hist_data, bkg_histo)
+    h_ratio = make_ratio_plot(hist_data, bkg_histo, Var, Region)
+    h_ratio.GetXaxis().SetTitle(get_var_name(Var))
     h_ratio.Draw()
     line = ROOT.TLine(hist_data.GetXaxis().GetXmin(), 1, hist_data.GetXaxis().GetXmax(), 1)
     line.Draw("same")
