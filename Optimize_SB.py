@@ -4,15 +4,16 @@ from utilities.GetDataFrame import get_signal_df, get_background_df
 
 ROOT.gROOT.SetStyle("ATLAS")
 
-
-def make_canvas(name ="canvas", left_margin=0.12, right_margin=0.03):
+def make_canvas(name ="canvas"):
     """Make a canvas for plotting."""
+    left_margin = 0.12
+    right_margin = 0.03
 
     canvas = ROOT.TCanvas(name, name, 800, 600)
     pad1 = ROOT.TPad("pad1", "pad1", 0., 0.305, .99, 1)
     pad1.SetLeftMargin(left_margin)
     pad1.SetRightMargin(right_margin)
-    pad1.SetBottomMargin(0.025)
+    pad1.SetBottomMargin(0.0)
     pad1.SetTopMargin(0.05)
     pad1.SetFillColor(ROOT.kWhite)
     pad1.SetTickx()
@@ -20,7 +21,7 @@ def make_canvas(name ="canvas", left_margin=0.12, right_margin=0.03):
     pad1.SetLogy(1)
 
     pad2 = ROOT.TPad("pad2", "pad2", 0., 0.01, .99, 0.295)
-    pad2.SetTopMargin(0.05)
+    # pad2.SetTopMargin(0.05)
     pad2.SetLeftMargin(left_margin)
     pad2.SetRightMargin(right_margin)
     pad2.SetBottomMargin(0.38)
@@ -34,8 +35,10 @@ def make_canvas(name ="canvas", left_margin=0.12, right_margin=0.03):
 def set_bins():
     """Set the binning for the histograms, based on the variable being plotted."""
     bins = {
-        "NN_score": (50, 0, 1),
-        "Hbb_bjR_mass": (50, 0, 300),
+        "NN_score": (10, 0.8, 1),
+        "Hbb_bjR_mass": (15, 110, 140),
+        # "NN_score": (50, 0, 1),
+        # "Hbb_bjR_mass": (50, 0, 300),
         "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
         "largeRjetpt_2": (50, 0, 1000),
         "largeRjetpt_3": (50, 0, 1000),
@@ -87,20 +90,24 @@ def calculate_yields(df, Var, selections=None):
     return yield_
 
 
-def make_Zn_plots(Var, optimize, selections=None):
+def make_Zn_plots(Var, optimize, selections=None, plot_all_signals=False):
     """Make plots of the Zn or S/B as a function of the cut value on a given variable, for a given region and rebinning factor."""
 
     bkg_names = ["dijet", "ttbar", "VV", "Vjets", "top"]
     sig_names = ["XHS_X2000_S1000", "XHS_X3000_S1500", "XHS_X4000_S2000"]
+    if plot_all_signals:
+        sig_names.extend(["XHS_X1000_S500", "XHS_X2000_S1500", "XHS_X2500_S1500",
+                         "XHS_X3000_S2000", "XHS_X3000_S2500", "XHS_X4000_S2000"])
+
     campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
     
-
     colors = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2, ROOT.kMagenta, ROOT.kCyan+1]
 
     hist_bkgs = {}
     for bkg in bkg_names:
         df = get_background_df(bkg, campaigns)
         bkg_hist = make_histogram(df, Var, selections)
+        print(f"Yield for {bkg}: {calculate_yields(df, Var, selections)}")
         bkg_hist.SetFillColor(colors[bkg_names.index(bkg)])
         bkg_hist.SetLineWidth(1)
         hist_bkgs[bkg] = bkg_hist
@@ -113,19 +120,32 @@ def make_Zn_plots(Var, optimize, selections=None):
 
     stack = ROOT.THStack()
     for id, (k, v) in enumerate(reversed(list(hist_bkgs.items()))):
-        if id == 0: bkgHisto = v.Clone()
-        else: bkgHisto.Add(v.GetPtr())
+        if id == 0: bkg_histo_total = v.Clone()
+        else: bkg_histo_total.Add(v.GetPtr())
         v.SetFillColor(colors[id])
         v.SetLineWidth(1)
         v.SetName("h"+k)
         stack.Add(v.GetPtr())
     
+    index = 0
     for sig_name, sig_hist in hist_sigs.items():
+        # automate colors and line styles
+        # sig_hist.Scale(1./100.)
         sig_hist.SetLineWidth(4)
-        sig_hist.SetLineStyle(2)
-        if "X2000" in sig_name: sig_hist.SetLineColor(ROOT.kOrange)
-        if "X3000" in sig_name: sig_hist.SetLineColor(ROOT.kCyan)
-        if "X4000" in sig_name: sig_hist.SetLineColor(ROOT.kViolet)
+        if "X2000_S1000" in sig_name:
+            sig_hist.SetLineColor(ROOT.kOrange)
+            sig_hist.SetLineStyle(2)
+        elif "X3000_S1500" in sig_name:
+            sig_hist.SetLineColor(ROOT.kCyan)
+            sig_hist.SetLineStyle(2)
+        elif "X4000_S2000" in sig_name:
+            sig_hist.SetLineColor(ROOT.kViolet)
+            sig_hist.SetLineStyle(2)
+        else:
+            sig_hist.SetLineColor(colors[index % len(colors)])
+            sig_hist.SetLineStyle(1)
+            sig_hist.SetLineWidth(2)
+            index += 1
 
     canvas, pad1, pad2 = make_canvas()
 
@@ -139,18 +159,25 @@ def make_Zn_plots(Var, optimize, selections=None):
     leg.SetFillColor(0)
     leg.SetBorderSize(0)
 
-    bkgHisto.Draw("E2 same")
-    stack.Draw("HIST")
-    stack.GetYaxis().SetTitle("Entries")
-    stack.SetMinimum(0.01)
-    stack.SetMaximum(10**6)
+    # stack.Draw("HIST")
+    # bkg_histo_total.Draw("E2 same")
+    bkg_histo_total.SetFillColor(0)
+    bkg_histo_total.SetLineColor(ROOT.kBlack)
+    bkg_histo_total.SetLineWidth(2)
+    bkg_histo_total.Draw("HIST")
+
+    bkg_histo_total.GetYaxis().SetTitle("Entries")
+    bkg_histo_total.SetMinimum(0.2)
+    bkg_histo_total.SetMaximum(10**9)
 
     for sig_name, sig_hist in hist_sigs.items():
         leg.AddEntry(sig_hist.GetPtr(), "#font[42]{"+sig_name+"}", "l")
         sig_hist.Draw("HIST same")
 
-    for k, v in hist_bkgs.items():
-       leg.AddEntry(v.GetPtr(),"#font[42]{"+k+"}","f")
+    # for k, v in hist_bkgs.items():
+    #    leg.AddEntry(v.GetPtr(),"#font[42]{"+k+"}","f")
+
+    leg.AddEntry(bkg_histo_total, "#font[42]{Total Bkg}", "l")
 
     leg.Draw()
 
@@ -158,12 +185,15 @@ def make_Zn_plots(Var, optimize, selections=None):
     pad2.Draw()
     pad2.cd()
 
-    if optimize == "Zn": hZnUpper, ymax = get_Zn_histogram(hist_sigs, bkgHisto,"upper")
-    else: hZnUpper, ymax = get_SB_histogram(hist_sigs, bkgHisto, "upper")
+    if optimize == "Zn": hZnUpper, ymax = get_Zn_histogram(hist_sigs, bkg_histo_total,"upper")
+    else: hZnUpper, ymax = get_SB_histogram(hist_sigs, bkg_histo_total, "upper")
 
     for h in hZnUpper:
         h.GetXaxis().SetTitle(Var)
         h.GetYaxis().SetRangeUser(0.,ymax+0.5)
+        h.GetXaxis().SetLabelSize(0.13)
+        h.GetXaxis().SetLabelOffset(0.02)
+        h.GetXaxis().SetTitleSize(0.15)
 
     hZnUpper[0].Draw()
     for k in range(1,len(hZnUpper)): hZnUpper[k].Draw("same")
@@ -177,7 +207,7 @@ if __name__ == "__main__":
 
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(False)
-    Optimize = "SB" # "Zn" or "SB"
+    Optimize = "Zn" # "Zn" or "SB"
 
     Vars = ["NN_score", "Hbb_bjR_mass"]
     # Vars = ["NN_score",
@@ -187,6 +217,7 @@ if __name__ == "__main__":
     # Preselections
     selections = ["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"]
     selections.extend(["largeRjetpt_1 > 500", "largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
+    selections.extend(["Hbb_bjR_mass < 140", "Hbb_bjR_mass > 110"]) # Signal window to study NN_score optimization
 
     for var in Vars:
-        make_Zn_plots(var, Optimize, selections)
+        make_Zn_plots(var, Optimize, selections, plot_all_signals=True)
