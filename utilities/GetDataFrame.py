@@ -6,8 +6,12 @@ load_dotenv("histograms.env")
 input_trees = os.getenv("INPUT_TREES")
 
 
-def get_signal_df(Process="XHS_X4000_S2000", campaigns=None):
+def get_signal_df(Process="XHS_X4000_S2000", campaigns: list[str] | None = None):
     """Get the dataframe for a given signal sample."""
+
+    if campaigns is None:
+        raise ValueError("campaigns must be provided")
+
 
     files = []
     for campaign in campaigns:
@@ -22,8 +26,12 @@ def get_signal_df(Process="XHS_X4000_S2000", campaigns=None):
     return dataframe
 
 
-def get_background_df(Process="ttbar", campaigns=None):
+def get_background_df(Process="ttbar", campaigns: list[str] | None = None):
     """Get the dataframe for a given background sample."""
+
+    if campaigns is None:
+        raise ValueError("campaigns must be provided")
+
 
     files = []
     for campaign in campaigns:
