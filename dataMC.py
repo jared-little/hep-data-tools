@@ -53,7 +53,6 @@ def make_ratio_plot(hist1, hist2, Var, Region):
     return h_ratio
 
 
-
 def _campaigns_to_data_years(campaigns):
     """Convert a list of campaign names to corresponding run-3 data years."""
     years = []
@@ -65,6 +64,7 @@ def _campaigns_to_data_years(campaigns):
         elif "e" in campaign:
             years.append("24")
     return years
+
 
 def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
     """Make a data/MC comparison plot for a given variable, region, rebinning factor, and campaigns."""
@@ -104,11 +104,12 @@ def plot_data_mc(Var, Region, rebin=1, campaigns=["mc23a"]):
     stack.SetMaximum(10 ** 5)
     # bkg_histo.Draw("E2 same")
     stack.Draw("HIST")
-    hist_data.Draw("eX0 same")
+    if "SR" not in Region: hist_data.Draw("eX0 same")
     leg.Draw()
 
     pad2.cd()
-    h_ratio = make_ratio_plot(hist_data, bkg_histo, Var, Region)
+    if "SR" not in Region: h_ratio = make_ratio_plot(hist_data, bkg_histo, Var, Region)
+    else: h_ratio = make_ratio_plot(bkg_histo, bkg_histo, Var, Region)
     h_ratio.GetXaxis().SetTitle(get_var_name(Var))
     h_ratio.Draw()
     line = ROOT.TLine(hist_data.GetXaxis().GetXmin(), 1, hist_data.GetXaxis().GetXmax(), 1)
@@ -125,9 +126,9 @@ if __name__ == "__main__":
 
     inputFolder = "/data/jlittle/HHARDout/Out_SplitHad/Hists/"
     # Variable = ["NN_score", "largeRjetpt", "largeRjetm", "NLargeRjets"]
-    Variable = ["NN_score"]
+    Variable = ["NN_score", "Hbb_bjR_mass"]
 
-    Regions = ["Preselection", "Preselection_CR0", "Preselection_VR2", "Preselection_CR2"]
+    Regions = ["Preselection", "Preselection_SR"]
     campaigns = ["mc23a", "mc23d", "mc23e"]
     rebin = 4
 
