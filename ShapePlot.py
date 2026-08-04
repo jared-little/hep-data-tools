@@ -19,7 +19,7 @@ def make_canvas(name ="canvas"):
     pad1.SetFillColor(ROOT.kWhite)
     pad1.SetTickx()
     pad1.SetTicky()
-    pad1.SetLogy(1)
+    # pad1.SetLogy(1)
     pad1.SetBottomMargin(0.15)
 
     return canvas, pad1
@@ -28,10 +28,10 @@ def make_canvas(name ="canvas"):
 def set_bins():
     """Set the binning for the histograms, based on the variable being plotted."""
     bins = {
-        "NN_score": (10, 0.8, 1),
-        "Hbb_bjR_mass": (15, 110, 140),
-        # "NN_score": (50, 0, 1),
-        # "Hbb_bjR_mass": (50, 0, 300),
+        # "NN_score": (10, 0.8, 1),
+        # "Hbb_bjR_mass": (15, 50, 200),
+        "NN_score": (20, 0, 1),
+        "Hbb_bjR_mass": (50, 100, 150),
         "largeRjetpt": (50, 0, 1000),
         "largeRjetpt_1": (50, 500, 1000), # Trigger turn-on is around 500 GeV, so start there
         "largeRjetpt_2": (50, 0, 1000),
@@ -46,12 +46,12 @@ def set_bins():
 
 def new_columns(df):
     """Define new columns in the RDataFrame for the variables we want to plot."""
-    df = df.Define("largeRjetpt_1", "largeRjetpt[0] / 1000")
-    df = df.Define("largeRjetpt_2", "largeRjetpt[1] / 1000")
-    df = df.Define("largeRjetpt_3", "largeRjetpt[2] / 1000")
-    df = df.Define("largeRjetm_1", "largeRjetm[0] / 1000")
-    df = df.Define("largeRjetm_2", "largeRjetm[1] / 1000")
-    df = df.Define("largeRjetm_3", "largeRjetm[2] / 1000")
+    df = df.Define("largeRjetpt_1", "largeRjetpt[0]")
+    df = df.Define("largeRjetpt_2", "largeRjetpt[1]")
+    df = df.Define("largeRjetpt_3", "largeRjetpt[2]")
+    df = df.Define("largeRjetm_1", "largeRjetm[0]")
+    df = df.Define("largeRjetm_2", "largeRjetm[1]")
+    df = df.Define("largeRjetm_3", "largeRjetm[2]")
 
     return df
 
@@ -67,7 +67,7 @@ def make_histogram(df, Var, selections=None):
         for sel in selections:
             df = df.Filter(sel)
 
-    hist = df.Histo1D((f"{Var}", f"{Var}", bins[0], bins[1], bins[2]), Var)
+    hist = df.Histo1D((f"{Var}", f"{Var}", bins[0], bins[1], bins[2]), Var, "combinedWeight")
 
     return hist
 
@@ -119,7 +119,7 @@ def plot_shape(Var, optimize, selections=None, plot_all_signals=False):
     index = 0
     for sig_name, sig_hist in hist_sigs.items():
         # automate colors and line styles
-        sig_hist.SetLineWidth(4)
+        # sig_hist.SetLineWidth(4)
         if "X2000_S1000" in sig_name:
             sig_hist.SetLineColor(ROOT.kOrange)
             sig_hist.SetLineStyle(2)
@@ -132,7 +132,7 @@ def plot_shape(Var, optimize, selections=None, plot_all_signals=False):
         else:
             sig_hist.SetLineColor(colors[index % len(colors)])
             sig_hist.SetLineStyle(1)
-            sig_hist.SetLineWidth(2)
+            # sig_hist.SetLineWidth(2)
             index += 1
 
     canvas, pad1 = make_canvas()
@@ -149,15 +149,17 @@ def plot_shape(Var, optimize, selections=None, plot_all_signals=False):
     bkg_histo_total.SetFillColor(0)
     bkg_histo_total.SetLineColor(ROOT.kBlack)
     bkg_histo_total.SetLineWidth(2)
+    # bkg_histo_total.Scale(1 / bkg_histo_total.Integral()) # Normalize to unit area
     bkg_histo_total.Draw("HIST")
 
-    bkg_histo_total.GetYaxis().SetTitle("Entries")
-    bkg_histo_total.SetMinimum(0.5)
-    bkg_histo_total.SetMaximum(10**9)
+    bkg_histo_total.GetYaxis().SetTitle(f"Fraction of events / {bkg_histo_total.GetBinWidth(1)}")
+    # bkg_histo_total.SetMinimum(0.02)
+    # bkg_histo_total.SetMaximum(0.06)
     bkg_histo_total.GetXaxis().SetTitle(get_var_name(Var))
 
     for sig_name, sig_hist in hist_sigs.items():
         leg.AddEntry(sig_hist.GetPtr(), "#font[42]{"+sig_name+"}", "l")
+        # sig_hist.Scale(1 / sig_hist.Integral()) # Normalize to unit area
         sig_hist.Draw("HIST same")
 
     leg.AddEntry(bkg_histo_total, "#font[42]{Total Bkg}", "l")
@@ -176,15 +178,18 @@ if __name__ == "__main__":
     ROOT.gStyle.SetOptStat(False)
     Optimize = "Zn" # "Zn" or "SB"
 
-    Vars = ["NN_score", "Hbb_bjR_mass"]
+    # Vars = ["Hbb_bjR_mass"]
+    Vars = ["NN_score"]
     # Vars = ["NN_score",
     #         "largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3",
     #         "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
 
     # Preselections
-    selections = ["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"]
-    selections.extend(["largeRjetpt_1 > 500", "largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
+    selections = ["largeRjetpt_1 > 520"]
+    # selections.extend(["NN_score > 0.95"])
+    selections.extend(["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"])
+    selections.extend(["largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
     selections.extend(["Hbb_bjR_mass < 140", "Hbb_bjR_mass > 110"]) # Signal window to study NN_score optimization
 
     for var in Vars:
-        plot_shape(var, Optimize, selections, plot_all_signals=True)
+        plot_shape(var, Optimize, selections, plot_all_signals=False)

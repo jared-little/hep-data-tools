@@ -23,12 +23,12 @@ def set_bins():
 
 def new_columns(df):
     """Define new columns in the RDataFrame for the variables we want to plot."""
-    df = df.Define("largeRjetpt_1", "largeRjetpt[0] / 1000")
-    df = df.Define("largeRjetpt_2", "largeRjetpt[1] / 1000")
-    df = df.Define("largeRjetpt_3", "largeRjetpt[2] / 1000")
-    df = df.Define("largeRjetm_1", "largeRjetm[0] / 1000")
-    df = df.Define("largeRjetm_2", "largeRjetm[1] / 1000")
-    df = df.Define("largeRjetm_3", "largeRjetm[2] / 1000")
+    df = df.Define("largeRjetpt_1", "largeRjetpt[0]")
+    df = df.Define("largeRjetpt_2", "largeRjetpt[1]")
+    df = df.Define("largeRjetpt_3", "largeRjetpt[2]")
+    df = df.Define("largeRjetm_1", "largeRjetm[0]")
+    df = df.Define("largeRjetm_2", "largeRjetm[1]")
+    df = df.Define("largeRjetm_3", "largeRjetm[2]")
 
     return df
 
@@ -181,7 +181,8 @@ if __name__ == "__main__":
     ROOT.gStyle.SetOptStat(False)
 
     start_time = time.time()
-    selections = ["NN_score > 0.5", "largeRjetm_1 > 75", "largeRjetm_2 > 75", "largeRjetm_3 > 70"]
+    selections = ["largeRjetm_1 > 75", "largeRjetm_2 > 75", "largeRjetm_3 > 70"]
+    # selections = ["largeRjetm_1 > 75", "largeRjetm_2 > 75", "largeRjetm_3 > 70", "largeRjetpt_2 > 350"]
 
     variables = ["largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3", "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
     combine_ROCs("total", variables, selections)

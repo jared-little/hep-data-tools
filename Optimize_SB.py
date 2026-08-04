@@ -4,6 +4,7 @@ from utilities.GetDataFrame import get_signal_df, get_background_df
 
 ROOT.gROOT.SetStyle("ATLAS")
 
+
 def make_canvas(name ="canvas"):
     """Make a canvas for plotting."""
     left_margin = 0.12
@@ -18,7 +19,7 @@ def make_canvas(name ="canvas"):
     pad1.SetFillColor(ROOT.kWhite)
     pad1.SetTickx()
     pad1.SetTicky()
-    pad1.SetLogy(1)
+    # pad1.SetLogy(1)
 
     pad2 = ROOT.TPad("pad2", "pad2", 0., 0.01, .99, 0.295)
     # pad2.SetTopMargin(0.05)
@@ -35,7 +36,7 @@ def make_canvas(name ="canvas"):
 def set_bins():
     """Set the binning for the histograms, based on the variable being plotted."""
     bins = {
-        "NN_score": (10, 0.8, 1),
+        "NN_score": (20, 0, 1),
         "Hbb_bjR_mass": (15, 110, 140),
         # "NN_score": (50, 0, 1),
         # "Hbb_bjR_mass": (50, 0, 300),
@@ -51,12 +52,12 @@ def set_bins():
 
 def new_columns(df):
     """Define new columns in the RDataFrame for the variables we want to plot."""
-    df = df.Define("largeRjetpt_1", "largeRjetpt[0] / 1000")
-    df = df.Define("largeRjetpt_2", "largeRjetpt[1] / 1000")
-    df = df.Define("largeRjetpt_3", "largeRjetpt[2] / 1000")
-    df = df.Define("largeRjetm_1", "largeRjetm[0] / 1000")
-    df = df.Define("largeRjetm_2", "largeRjetm[1] / 1000")
-    df = df.Define("largeRjetm_3", "largeRjetm[2] / 1000")
+    df = df.Define("largeRjetpt_1", "largeRjetpt[0]")
+    df = df.Define("largeRjetpt_2", "largeRjetpt[1]")
+    df = df.Define("largeRjetpt_3", "largeRjetpt[2]")
+    df = df.Define("largeRjetm_1", "largeRjetm[0]")
+    df = df.Define("largeRjetm_2", "largeRjetm[1]")
+    df = df.Define("largeRjetm_3", "largeRjetm[2]")
 
     return df
 
@@ -100,7 +101,6 @@ def make_Zn_plots(Var, optimize, selections=None, plot_all_signals=False):
                          "XHS_X3000_S2000", "XHS_X3000_S2500", "XHS_X4000_S2000"])
 
     campaigns = ["mc23a", "mc23d", "mc23e"] # "mc23a, mc23d, mc23e"
-    
     colors = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2, ROOT.kMagenta, ROOT.kCyan+1]
 
     hist_bkgs = {}
@@ -126,7 +126,7 @@ def make_Zn_plots(Var, optimize, selections=None, plot_all_signals=False):
         v.SetLineWidth(1)
         v.SetName("h"+k)
         stack.Add(v.GetPtr())
-    
+
     index = 0
     for sig_name, sig_hist in hist_sigs.items():
         # automate colors and line styles
@@ -168,7 +168,8 @@ def make_Zn_plots(Var, optimize, selections=None, plot_all_signals=False):
 
     bkg_histo_total.GetYaxis().SetTitle("Entries")
     bkg_histo_total.SetMinimum(0.2)
-    bkg_histo_total.SetMaximum(10**9)
+    # bkg_histo_total.SetMaximum(10**9)
+    bkg_histo_total.SetMaximum(100000)
 
     for sig_name, sig_hist in hist_sigs.items():
         leg.AddEntry(sig_hist.GetPtr(), "#font[42]{"+sig_name+"}", "l")
@@ -209,15 +210,14 @@ if __name__ == "__main__":
     ROOT.gStyle.SetOptStat(False)
     Optimize = "Zn" # "Zn" or "SB"
 
-    Vars = ["NN_score", "Hbb_bjR_mass"]
-    # Vars = ["NN_score",
-    #         "largeRjetpt_1", "largeRjetpt_2", "largeRjetpt_3",
-    #         "largeRjetm_1", "largeRjetm_2", "largeRjetm_3"]
+    Vars = ["NN_score"]
 
     # Preselections
-    selections = ["largeRjetm_1 > 60", "largeRjetm_2 > 70", "largeRjetm_3 > 70"]
-    selections.extend(["largeRjetpt_1 > 500", "largeRjetpt_2 > 350", "largeRjetpt_3 > 200"])
+    # selections = ["NN_score > 0.0"]
+    selections = ["largeRjetm[0] > 60", "largeRjetm[1] > 70", "largeRjetm[2] > 70"]
+    selections.extend(["largeRjetpt[0] > 500", "largeRjetpt[1] > 350", "largeRjetpt[2] > 200"])
     selections.extend(["Hbb_bjR_mass < 140", "Hbb_bjR_mass > 110"]) # Signal window to study NN_score optimization
+    # selections.extend(["NN_score > 0.95"])
 
     for var in Vars:
-        make_Zn_plots(var, Optimize, selections, plot_all_signals=True)
+        make_Zn_plots(var, Optimize, selections, plot_all_signals=False)

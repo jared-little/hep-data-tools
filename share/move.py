@@ -10,15 +10,16 @@ def main(ntuple = False, histogram = True) -> None:
        to the "ntuples" or "histograms" folders."""
 
     campaigns = ["mc23a", "mc23d", "mc23e"]  # mc23a, mc23d, mc23e
+    gnVersion = "gn2"  # gn2, gn3
 
     for campaign in campaigns:
         print(f"Processing campaign: {campaign}")
         if ntuple == True:
-            in_path_glob = f"/Users/jlittle/work/HHbbVV/preselection_loose/{campaign}_sysv03_nominal/Exports/*"
-            out_path = Path("/Users/jlittle/work/HHbbVV/preselection_loose/ntuples/")
+            in_path_glob = f"/data/jlittle/HHARDout/{gnVersion}/{campaign}_sysv04_nominal/Exports/*"
+            out_path = Path(f"/data/jlittle/HHARDout/{gnVersion}/ntuples/")
         elif histogram == True:
-            in_path_glob = f"/Users/jlittle/work/HHbbVV/preselection_loose/{campaign}_sysv03_nominal/Hists/*"
-            out_path = Path("/Users/jlittle/work/HHbbVV/preselection_loose/histograms/")
+            in_path_glob = f"/data/jlittle/HHARDout/{gnVersion}/{campaign}_sysv04_nominal/Hists/*"
+            out_path = Path(f"/data/jlittle/HHARDout/{gnVersion}/histograms/")
         else:
             print("Please specify whether you want to move ntuples or histograms by setting the appropriate flag to True.")
 
@@ -30,11 +31,12 @@ def main(ntuple = False, histogram = True) -> None:
 
             if str(src) != str(dest):
                 shutil.copy2(src, dest)
-                # print(f"source: {src}")
-                # print(f"destination: {dest}")
+                print(f"Copying from {src} to {dest}")
             else:
                 print(f"source and destination are the same: {src}")
 
 
 if __name__ == "__main__":
+
     main(ntuple = True, histogram = False)
+    main(ntuple = False, histogram = True)
