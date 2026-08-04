@@ -6,7 +6,12 @@ load_dotenv("histograms.env")
 input_histograms = os.getenv("INPUT_HISTOGRAMS")
 
 
-def _get_detached_histogram(file_path, hist_path, clone_suffix):
+def _region_path(Region, Syst=None):
+    """Directory holding one region: <Region> nominally, or systs/<Syst>/<Region> for a systematic variation."""
+    return f"systs/{Syst}/{Region}" if Syst else Region
+
+
+def get_detached_histogram(file_path, hist_path, clone_suffix):
     """Load a histogram from a ROOT file and detach it from file ownership."""
 
     root_file = ROOT.TFile.Open(file_path)
@@ -25,19 +30,21 @@ def _get_detached_histogram(file_path, hist_path, clone_suffix):
     return detached
 
 
-def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None):
-    """Get the signal histogram for a given signal, variable, region, and rebinning factor."""
+def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None, Syst=None):
+    """Get the signal histogram for a given signal, variable, region, and rebinning factor.
+    Pass Syst="<syst_name>" to read the systematic variation instead of nominal."""
 
     if campaigns is None:
         campaigns = ["mc23a"]
     if not input_histograms:
         raise RuntimeError("INPUT HISTOGRAMS FOLDER is not set. Check histograms.env")
 
+    region_path = _region_path(Region, Syst)
     hists = []
     for campaign in campaigns:
         file_path = os.path.join(input_histograms, f"{campaign}_{Signal}_bbWW_allhad.root")
-        hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Signal}_bbWW_allhad/{Var}"
-        hists.append(_get_detached_histogram(file_path, hist_path, campaign))
+        hist_path = f"{region_path}/bbVVSplitHadAnalysis_13p6TeV_{Signal}_bbWW_allhad/{Var}"
+        hists.append(get_detached_histogram(file_path, hist_path, campaign))
     
     # Sum histograms from different campaigns
     if not hists:
@@ -65,19 +72,21 @@ def get_signal_histogram(Signal="XHS_X4000_S2000", Var="NN_score", Region="Prese
     return sig_histogram
 
 
-def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None):
-    """Get the background histogram for a given background, variable, region, and rebinning factor."""
+def get_bkg_histogram(Bkg="dijet", Var="NN_score", Region="Preselection", Rebin=1, campaigns=None, Syst=None):
+    """Get the background histogram for a given background, variable, region, and rebinning factor.
+    Pass Syst="<syst_name>" to read the systematic variation instead of nominal."""
 
     if campaigns is None:
         campaigns = ["mc23a"]
     if not input_histograms:
         raise RuntimeError("INPUT HISTOGRAMS FOLDER is not set. Check histograms.env")
 
+    region_path = _region_path(Region, Syst)
     hists = []
     for campaign in campaigns:
         file_path = os.path.join(input_histograms, f"{campaign}_{Bkg}.root")
-        hist_path = f"{Region}/bbVVSplitHadAnalysis_13p6TeV_{Bkg}/{Var}"
-        hists.append(_get_detached_histogram(file_path, hist_path, campaign))
+        hist_path = f"{region_path}/bbVVSplitHadAnalysis_13p6TeV_{Bkg}/{Var}"
+        hists.append(get_detached_histogram(file_path, hist_path, campaign))
 
     if not hists:
         raise RuntimeError(f"No histograms loaded for background {Bkg}")
@@ -113,7 +122,7 @@ def get_data_histogram(Var="NN_score", region="Preselection", rebin=1, campaigns
     for campaign in campaigns:
         file_path = os.path.join(input_histograms, f"data{campaign}.root")
         hist_path = f"{region}/bbVVSplitHadAnalysis_13p6TeV_data/{Var}"
-        hists.append(_get_detached_histogram(file_path, hist_path, campaign))
+        hists.append(get_detached_histogram(file_path, hist_path, campaign))
 
     if not hists:
         raise RuntimeError("No histograms loaded for data")
@@ -145,16 +154,20 @@ def get_var_name(Var):
     """
     var_name = {
         "NN_score": "NN Score",
-        "Hbb_bjR_mass": "M(H_{bb})",
-        "largeRjetpt_1": "Leading Large-R UFO Jet p_{T}",
-        "largeRjetpt_2": "Subleading Large-R UFO Jet p_{T}",
-        "largeRjetpt_3": "Third Leading Large-R UFO Jet p_{T}",
-        "largeRjetm_1": "Leading Large-R UFO Jet Mass",
-        "largeRjetm_2": "Subleading Large-R UFO Jet Mass",
-        "largeRjetm_3": "Third Leading Large-R UFO Jet Mass",
-        "largeRjetpt": "Leading Large-R UFO Jet p_{T}",
-        "largeRjetm": "Leading Large-R UFO Jet Mass",
-        "NLargeRjets": "Number of Large-R UFO Jets"
+        "Hbb_bjR_mass": "m(H_{bb})",
+        "Hbb_bjR_pt": "p_{T}(H_{bb})",
+        "largeRjetpt_1": "Leading Large-R UFO Jet p_{T}", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetpt_2": "Subleading Large-R UFO Jet p_{T}", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetpt_3": "Third Leading Large-R UFO Jet p_{T}", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetm_1": "Leading Large-R UFO Jet Mass", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetm_2": "Subleading Large-R UFO Jet Mass", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetm_3": "Third Leading Large-R UFO Jet Mass", # Doesn't always exist, but we can still have the name defined for when it does
+        "largeRjetpt": "Large-R UFO Jet p_{T}",
+        "largeRjetm": "Large-R UFO Jet Mass",
+        "NLargeRjets": "Number of Large-R UFO Jets",
+        "GN2X_count": "Number of GN2X-tagged Large-R UFO Jets",
+        "mS": "m(S)",
+        "mX": "m(X)"
     }
 
     return var_name[Var]
