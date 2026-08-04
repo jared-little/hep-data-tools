@@ -15,7 +15,7 @@ def get_signal_df(Process="XHS_X4000_S2000", campaigns: list[str] | None = None)
 
     files = []
     for campaign in campaigns:
-        sample_name = f"{campaign}_bbVV_{Process}_bbWW_allhad_PreselectionLoose.root"
+        sample_name = f"{campaign}_bbVV_{Process}_bbWW_allhad_Preselection.root"
         full_path = os.path.join(input_trees, sample_name)
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File not found: {full_path}")
@@ -35,7 +35,7 @@ def get_background_df(Process="ttbar", campaigns: list[str] | None = None):
 
     files = []
     for campaign in campaigns:
-        sample_name = f"{campaign}_bbVV_{Process}_PreselectionLoose.root"
+        sample_name = f"{campaign}_bbVV_{Process}_Preselection.root"
         full_path = os.path.join(input_trees, sample_name)
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File not found: {full_path}")
